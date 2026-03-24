@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Solicitações | Tripla G&G</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f6ff',
+                            100: '#e0edff',
+                            200: '#cce0ff',
+                            300: '#a3c7ff',
+                            400: '#75a8ff',
+                            500: '#4783ff',
+                            600: '#1a56db', /* Tripla Main Blue */
+                            700: '#1441a8',
+                            800: '#103380',
+                            900: '#0d275e',
+                            950: '#08173b',
+                        },
+                        background: '#f1f5f9', // slate-100
+                        surface: '#ffffff',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar for Kanban */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Drag & Drop Visual Feedback */
+        .kanban-card {
+            cursor: grab;
+            transition: transform 0.1s ease, box-shadow 0.2s ease;
+        }
+        .kanban-card:active { cursor: grabbing; }
+        .kanban-card.is-dragging {
+            opacity: 0.5;
+            transform: scale(0.95) rotate(2deg);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .kanban-column.drag-over {
+            background-color: #f0f6ff; /* brand-50 */
+            border-color: #a3c7ff; /* brand-300 */
+        }
+    </style>
+</head>
+<body class="bg-background text-slate-800 font-sans antialiased h-screen flex overflow-hidden">
+
+    <!-- Sidebar / Menu Lateral -->
+    <aside class="w-64 bg-brand-950 text-white flex flex-col shadow-xl z-20 hidden md:flex">
+        <!-- Logo Area -->
+        <div class="h-20 flex items-center gap-3 px-6 border-b border-brand-800/50">
+            <svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="40" height="40" rx="8" fill="#1a56db"/>
+                <path d="M12 28L20 12L28 28H23L20 22L17 28H12Z" fill="white"/>
+                <path d="M20 22L23 28H28L20 12V22Z" fill="#75a8ff"/>
+            </svg>
+            <div>
+                <span class="text-xl font-extrabold tracking-tight text-white block leading-none">tripla</span>
+                <span class="text-[10px] text-brand-300 font-medium tracking-wider uppercase">Gente & Gestão</span>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-brand-200 hover:text-white hover:bg-brand-800 transition-colors">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">Dashboard</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-brand-600 text-white shadow-md shadow-brand-900/20 transition-colors">
+                <i data-lucide="kanban-square" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">Quadro de Solicitações</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-brand-200 hover:text-white hover:bg-brand-800 transition-colors">
+                <i data-lucide="users" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">Diretório de Pessoas</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-brand-200 hover:text-white hover:bg-brand-800 transition-colors">
+                <i data-lucide="pie-chart" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">Relatórios e SLAs</span>
+            </a>
+            
+            <div class="pt-6 mt-6 border-t border-brand-800/50 px-3">
+                <p class="text-[11px] font-semibold text-brand-400 uppercase tracking-wider mb-2">Configurações</p>
+                <a href="#" class="flex items-center gap-3 py-2 rounded-lg text-brand-200 hover:text-white transition-colors">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                    <span class="font-medium text-sm">Preferências</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- User Profile (Bottom) -->
+        <div class="p-4 border-t border-brand-800/50 bg-brand-900/30">
+            <div class="flex items-center gap-3">
+                <img src="https://i.pravatar.cc/150?img=47" alt="Avatar" class="w-10 h-10 rounded-full border-2 border-brand-500">
+                <div>
+                    <p class="text-sm font-semibold text-white">Carla RH</p>
+                    <p class="text-xs text-brand-300">Business Partner</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-screen min-w-0 overflow-hidden bg-slate-50">
+        
+        <!-- Top Header -->
+        <header class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 flex-shrink-0">
+            <div class="flex items-center gap-4">
+                <button class="md:hidden text-slate-500 hover:text-brand-600">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800">Quadro de Solicitações</h1>
+                    <p class="text-sm text-slate-500">Acompanhamento e execução de tickets G&G</p>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-4">
+                <div class="relative hidden sm:block">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" placeholder="Buscar ticket ou nome..." class="pl-9 pr-4 py-2 bg-slate-100 border-transparent rounded-lg text-sm focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition-all w-64">
+                </div>
+                <button class="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 text-slate-600 hover:bg-brand-50 hover:text-brand-600 transition-colors relative">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                </button>
+                <button class="hidden sm:flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Novo Ticket
+                </button>
+            </div>
+        </header>
+
+        <!-- Filters Bar -->
+        <div class="bg-white border-b border-slate-200 px-6 py-3 flex items-center gap-2 overflow-x-auto flex-shrink-0">
+            <span class="text-sm font-semibold text-slate-500 mr-2 flex-shrink-0">Filtrar por Área:</span>
+            <button class="filter-btn active px-4 py-1.5 rounded-full text-sm font-medium bg-slate-800 text-white transition-colors whitespace-nowrap" data-filter="all">Todos</button>
+            <button class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="rs">Recrutamento</button>
+            <button class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="td">Treinamento</button>
+            <button class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="dp">Depto. Pessoal</button>
+            <button class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium bg-brand-50 text-brand-700 hover:bg-brand-100 border border-brand-200 transition-colors whitespace-nowrap" data-filter="clima">Comunicados & Clima</button>
+        </div>
+
+        <!-- Kanban Board Area -->
+        <div class="flex-1 overflow-x-auto overflow-y-hidden">
+            <div class="h-full flex gap-6 p-6 min-w-max items-start">
+                
+                <!-- Column 1: Backlog / Novas -->
+                <div class="kanban-column flex flex-col w-80 max-h-full bg-slate-100 rounded-2xl border border-slate-200/60 transition-colors duration-200">
+                    <div class="p-4 flex items-center justify-between border-b border-slate-200/60">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
+                            <h2 class="font-bold text-slate-700">Novas (Triagem)</h2>
+                        </div>
+                        <span class="bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">3</span>
+                    </div>
+                    <div class="p-3 flex-1 overflow-y-auto space-y-3 column-content" id="col-novas">
+                        
+                        <!-- Card 1: Comunicado -->
+                        <div class="kanban-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand-300" draggable="true" data-type="clima" onclick="openModal('TRP-8492')">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-[10px] font-bold tracking-wider text-rose-600 bg-rose-50 px-2 py-1 rounded uppercase">Comunicado</span>
+                                <span class="text-xs text-slate-400 font-mono">#8492</span>
+                            </div>
+                            <h3 class="font-semibold text-slate-800 text-sm mb-1 leading-snug">Disparo de Lançamento: Novo Produto TriplaPay</h3>
+                            <p class="text-xs text-slate-500 mb-3 line-clamp-2">Solicitação de disparo para toda a empresa avisando sobre o lançamento. Precisa de arte.</p>
+                            
+                            <div class="flex items-center justify-between mt-auto">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-brand-100 flex items-center justify-center text-[10px] font-bold text-brand-700" title="Marcos (Marketing)">MK</div>
+                                    <span class="text-xs text-slate-500">Hoje</span>
+                                </div>
+                                <span class="flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                                    <i data-lucide="clock" class="w-3 h-3"></i> SLA: 24h
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: R&S -->
+                        <div class="kanban-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand-300" draggable="true" data-type="rs">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-[10px] font-bold tracking-wider text-indigo-600 bg-indigo-50 px-2 py-1 rounded uppercase">Recrutamento</span>
+                                <span class="text-xs text-slate-400 font-mono">#8493</span>
+                            </div>
+                            <h3 class="font-semibold text-slate-800 text-sm mb-1 leading-snug">Vaga: Desenvolvedor Front-end Sênior</h3>
+                            <p class="text-xs text-slate-500 mb-3 line-clamp-2">Aumento de quadro. Orçamento aprovado. Modelo remoto.</p>
+                            
+                            <div class="flex items-center justify-between mt-auto">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600" title="Ana (Tecnologia)">TI</div>
+                                    <span class="text-xs text-slate-500">Ontem</span>
+                                </div>
+                                <i data-lucide="paperclip" class="w-3.5 h-3.5 text-slate-400"></i>
+                            </div>
+                        </div>
+
+                         <!-- Card 3: DP -->
+                         <div class="kanban-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand-300" draggable="true" data-type="dp">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-[10px] font-bold tracking-wider text-amber-600 bg-amber-50 px-2 py-1 rounded uppercase">Depto. Pessoal</span>
+                                <span class="text-xs text-slate-400 font-mono">#8495</span>
+                            </div>
+                            <h3 class="font-semibold text-slate-800 text-sm mb-1 leading-snug">Alteração de Período de Férias</h3>
+                            <p class="text-xs text-slate-500 mb-3 line-clamp-2">Colaborador João Silva solicitou alteração para Dezembro.</p>
+                            
+                            <div class="flex items-center justify-between mt-auto">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600">VD</div>
+                                    <span class="text-xs text-slate-500">Hoje</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Column 2: Em Andamento -->
+                <div class="kanban-column flex flex-col w-80 max-h-full bg-slate-100 rounded-2xl border border-slate-200/60 transition-colors duration-200">
+                    <div class="p-4 flex items-center justify-between border-b border-slate-200/60">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+                            <h2 class="font-bold text-slate-700">Em Execução</h2>
+                        </div>
+                        <span class="bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">1</span>
+                    </div>
+                    <div class="p-3 flex-1 overflow-y-auto space-y-3 column-content" id="col-andamento">
+                        
+                        <!-- Card 4: T&D -->
+                        <div class="kanban-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 border-l-4 border-l-amber-400 hover:shadow-md" draggable="true" data-type="td">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-[10px] font-bold tracking-wider text-fuchsia-600 bg-fuchsia-50 px-2 py-1 rounded uppercase">Treinamento</span>
+                                <span class="text-xs text-slate-400 font-mono">#8480</span>
+                            </div>
+                            <h3 class="font-semibold text-slate-800 text-sm mb-1 leading-snug">Workshop de Liderança In-Company</h3>
+                            <p class="text-xs text-slate-500 mb-3 line-clamp-2">Cotação com fornecedores de treinamento para 15 líderes.</p>
+                            
+                            <div class="mt-2 mb-3">
+                                <div class="flex justify-between text-[10px] text-slate-500 mb-1">
+                                    <span>Progresso</span>
+                                    <span>50%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-1.5">
+                                    <div class="bg-amber-400 h-1.5 rounded-full" style="width: 50%"></div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between mt-auto">
+                                <div class="flex items-center -space-x-2">
+                                    <img src="https://i.pravatar.cc/150?img=47" class="w-6 h-6 rounded-full border border-white" title="Responsável: Carla">
+                                </div>
+                                <span class="text-xs text-slate-500">Há 2 dias</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Column 3: Aguardando / Bloqueado -->
+                <div class="kanban-column flex flex-col w-80 max-h-full bg-slate-100 rounded-2xl border border-slate-200/60 transition-colors duration-200">
+                    <div class="p-4 flex items-center justify-between border-b border-slate-200/60">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2.5 h-2.5 rounded-full bg-purple-500"></div>
+                            <h2 class="font-bold text-slate-700">Aguardando Terceiros</h2>
+                        </div>
+                        <span class="bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">1</span>
+                    </div>
+                    <div class="p-3 flex-1 overflow-y-auto space-y-3 column-content" id="col-aguardando">
+                        
+                         <!-- Card 5: DP -->
+                         <div class="kanban-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 opacity-80 hover:opacity-100 transition-opacity" draggable="true" data-type="dp">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-[10px] font-bold tracking-wider text-amber-600 bg-amber-50 px-2 py-1 rounded uppercase">Depto. Pessoal</span>
+                                <span class="text-xs text-slate-400 font-mono">#8475</span>
+                            </div>
+                            <h3 class="font-semibold text-slate-800 text-sm mb-1 leading-snug">Desligamento: Analista Financeiro</h3>
+                            <div class="flex items-center gap-1 text-[10px] text-purple-600 bg-purple-50 px-2 py-1 rounded mb-3 w-fit">
+                                <i data-lucide="alert-circle" class="w-3 h-3"></i> Aguardando Exame Demissional
+                            </div>
+                            
+                            <div class="flex items-center justify-between mt-auto pt-2 border-t border-slate-100">
+                                <span class="text-xs text-slate-500">Resp: RH Legal</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Column 4: Concluído -->
+                <div class="kanban-column flex flex-col w-80 max-h-full bg-slate-100/50 rounded-2xl border border-slate-200/60 border-dashed transition-colors duration-200">
+                    <div class="p-4 flex items-center justify-between border-b border-slate-200/60">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                            <h2 class="font-bold text-slate-700">Concluídas (7 dias)</h2>
+                        </div>
+                    </div>
+                    <div class="p-3 flex-1 overflow-y-auto space-y-3 column-content" id="col-concluido">
+                         
+                        <!-- Card 6: DP Done -->
+                        <div class="kanban-card bg-slate-50 p-4 rounded-xl shadow-sm border border-slate-200" draggable="true" data-type="dp">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-[10px] font-bold tracking-wider text-slate-500 bg-slate-200 px-2 py-1 rounded uppercase line-through">Depto. Pessoal</span>
+                                <span class="text-xs text-slate-400 font-mono">#8460</span>
+                            </div>
+                            <h3 class="font-semibold text-slate-600 text-sm mb-1 leading-snug line-through">Atestado Médico (3 dias)</h3>
+                            <div class="flex items-center gap-1 text-[10px] text-emerald-600 font-medium mt-3">
+                                <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Finalizado ontem
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Overlay / Modal para Detalhes do Ticket (Simula o formulário preenchido) -->
+    <div id="ticketModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex justify-end transition-opacity duration-300 opacity-0">
+        
+        <!-- Sidebar Right (Slide In) -->
+        <div id="modalContent" class="w-full max-w-xl bg-white h-full shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300">
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-mono text-slate-500 bg-white px-2 py-1 rounded border border-slate-200">#TRP-8492</span>
+                    <span class="text-[10px] font-bold tracking-wider text-rose-600 bg-rose-50 px-2 py-1 rounded uppercase">Comunicado</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"><i data-lucide="printer" class="w-4 h-4"></i></button>
+                    <button class="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors" onclick="closeModal()"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div class="flex-1 overflow-y-auto p-6">
+                
+                <h2 class="text-2xl font-bold text-slate-900 mb-6">Disparo de Lançamento: Novo Produto TriplaPay</h2>
+
+                <!-- Status Select -->
+                <div class="mb-8 p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium mb-1">Status Atual</p>
+                        <select class="text-sm font-semibold bg-transparent outline-none cursor-pointer">
+                            <option>📥 Novas (Triagem)</option>
+                            <option>⚙️ Em Execução</option>
+                            <option>⏳ Aguardando Terceiros</option>
+                            <option>✅ Concluído</option>
+                        </select>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium mb-1">Responsável G&G</p>
+                        <select class="text-sm font-semibold bg-transparent outline-none cursor-pointer text-brand-600">
+                            <option>Atribuir a mim</option>
+                            <option>Carla RH</option>
+                            <option>Equipe Endomarketing</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Info Grid -->
+                <div class="space-y-6">
+                    <!-- Solicitante -->
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Dados do Solicitante</h4>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-sm">MK</div>
+                            <div>
+                                <p class="text-sm font-semibold text-slate-900">Marcos Klein</p>
+                                <p class="text-xs text-slate-500">Marketing / mklein@tripla.com.br</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-slate-100"></div>
+
+                    <!-- Detalhes preenchidos -->
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Detalhes da Solicitação</h4>
+                        
+                        <div class="grid grid-cols-2 gap-y-4 gap-x-6 mb-6">
+                            <div>
+                                <p class="text-xs text-slate-500 mb-1">Classificação</p>
+                                <p class="text-sm font-medium text-slate-800">Lançamento de Produto</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500 mb-1">Tom de Voz</p>
+                                <p class="text-sm font-medium text-slate-800">Inspiracional & Motivador</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500 mb-1">Público-alvo</p>
+                                <p class="text-sm font-medium text-slate-800">Toda a Empresa (All Hands)</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500 mb-1">Data Agendada</p>
+                                <p class="text-sm font-medium text-slate-800 text-red-600">Amanhã, 14:00</p>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <p class="text-xs text-slate-500 mb-2">Canais Selecionados</p>
+                            <div class="flex gap-2">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium"><i data-lucide="mail" class="w-3 h-3"></i> E-mail</span>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium"><i data-lucide="message-square" class="w-3 h-3"></i> Slack</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4 p-3 bg-brand-50 border border-brand-100 rounded-lg flex items-start gap-3">
+                            <i data-lucide="paintbrush" class="w-4 h-4 text-brand-600 mt-0.5"></i>
+                            <div>
+                                <p class="text-sm font-semibold text-brand-900">Necessita Criação de Arte</p>
+                                <p class="text-xs text-brand-700 mt-0.5">Acionar time de design interno para o banner.</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="text-xs text-slate-500 mb-2">Briefing / Texto Base</p>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-700 whitespace-pre-line font-serif leading-relaxed">
+                                Pessoal, chegou o grande dia! Amanhã lançaremos oficialmente o TriplaPay para o mercado. 
+                                
+                                Preciso que avisemos todos os colaboradores para que entrem na live do CEO e também preparem as redes sociais (LinkedIn). 
+                                
+                                Por favor, usar as cores da nova marca (anexos).
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border-t border-slate-100"></div>
+
+                    <!-- Anexos -->
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Anexos (2)</h4>
+                        <div class="flex gap-3">
+                            <div class="flex items-center gap-2 p-2 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 text-sm w-48 truncate">
+                                <i data-lucide="image" class="w-4 h-4 text-blue-500"></i>
+                                <span class="truncate">logo_triplapay_final.png</span>
+                            </div>
+                            <div class="flex items-center gap-2 p-2 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 text-sm w-48 truncate">
+                                <i data-lucide="file-text" class="w-4 h-4 text-red-500"></i>
+                                <span class="truncate">manual_marca.pdf</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer (Ações) -->
+            <div class="p-4 border-t border-slate-200 bg-white flex gap-3 justify-end">
+                <button class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
+                    Rejeitar Solicitação
+                </button>
+                <button class="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition-colors flex items-center gap-2" onclick="closeModal()">
+                    <i data-lucide="check" class="w-4 h-4"></i> Salvar e Iniciar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Inicializa Lucide Icons
+        lucide.createIcons();
+
+        // 1. Drag and Drop Logic
+        const cards = document.querySelectorAll('.kanban-card');
+        const columns = document.querySelectorAll('.column-content');
+
+        cards.forEach(card => {
+            card.addEventListener('dragstart', () => {
+                card.classList.add('is-dragging');
+            });
+
+            card.addEventListener('dragend', () => {
+                card.classList.remove('is-dragging');
+            });
+        });
+
+        columns.forEach(column => {
+            column.addEventListener('dragover', e => {
+                e.preventDefault(); // Permite o drop
+                column.parentElement.classList.add('drag-over');
+                
+                // Determina a posição para inserir
+                const afterElement = getDragAfterElement(column, e.clientY);
+                const draggingCard = document.querySelector('.is-dragging');
+                
+                if (afterElement == null) {
+                    column.appendChild(draggingCard);
+                } else {
+                    column.insertBefore(draggingCard, afterElement);
+                }
+            });
+
+            column.addEventListener('dragleave', () => {
+                column.parentElement.classList.remove('drag-over');
+            });
+
+            column.addEventListener('drop', () => {
+                column.parentElement.classList.remove('drag-over');
+                // Aqui entraria a lógica de salvar o novo status no banco de dados (API)
+            });
+        });
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.kanban-card:not(.is-dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        // 2. Filtro de Categorias (Pílulas)
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove visual ativo de todos
+                filterBtns.forEach(b => {
+                    b.classList.remove('bg-slate-800', 'text-white');
+                    b.classList.add('bg-slate-100', 'text-slate-600');
+                    // Limpa estilos específicos da pílula de brand
+                    if(b.dataset.filter === 'clima') b.classList.add('bg-brand-50', 'text-brand-700');
+                });
+
+                // Adiciona visual ativo no clicado
+                btn.classList.remove('bg-slate-100', 'text-slate-600', 'bg-brand-50', 'text-brand-700');
+                btn.classList.add('bg-slate-800', 'text-white');
+
+                const filterValue = btn.dataset.filter;
+                
+                cards.forEach(card => {
+                    if (filterValue === 'all' || card.dataset.type === filterValue) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // 3. Modal Logic
+        const modal = document.getElementById('ticketModal');
+        const modalContent = document.getElementById('modalContent');
+
+        function openModal(ticketId) {
+            // Em uma aplicação real, aqui faríamos um fetch() na API buscando os detalhes do ticketId
+            modal.classList.remove('hidden');
+            
+            // Pequeno delay para a transição CSS funcionar
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('translate-x-full');
+            }, 10);
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0');
+            modalContent.classList.add('translate-x-full');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // Fechar modal clicando fora (no overlay)
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    </script>
+<script type="module">
+    import { initializeApp } from "[https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js](https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js)";
+    import { getFirestore, collection, onSnapshot, doc, updateDoc } from "[https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js](https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js)";
+
+    // Use a mesma firebaseConfig aqui
+    const firebaseConfig = { /* ... suas credenciais ... */ };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Função para carregar tickets em tempo real
+    function carregarTickets() {
+        // onSnapshot "escuta" o banco. Se um ticket for criado lá no Hub, aparece aqui na hora.
+        onSnapshot(collection(db, "tickets"), (snapshot) => {
+            
+            // 1. Limpar as colunas atuais
+            document.getElementById('col-novas').innerHTML = '';
+            document.getElementById('col-andamento').innerHTML = '';
+            document.getElementById('col-aguardando').innerHTML = '';
+            document.getElementById('col-concluido').innerHTML = '';
+
+            // 2. Distribuir os tickets nas colunas
+            snapshot.forEach((docSnap) => {
+                const ticket = docSnap.data();
+                const ticketId = docSnap.id;
+                
+                // Função auxiliar (que você deve criar) para gerar o HTML do Card
+                const cardHTML = criarCardHTML(ticket, ticketId); 
+                
+                // Colocar na coluna certa baseada no status
+                if (ticket.status === 'novas') document.getElementById('col-novas').innerHTML += cardHTML;
+                else if (ticket.status === 'andamento') document.getElementById('col-andamento').innerHTML += cardHTML;
+                // ... e assim por diante
+            });
+
+            // 3. Re-ativar o Drag and Drop nos novos cards gerados
+            inicializarDragAndDrop(); 
+        });
+    }
+
+    // Inicializa ao abrir a página
+    carregarTickets();
+
+    // Lógica para atualizar no Firebase ao soltar o Card (Drag & Drop)
+    // No seu evento de 'drop', você deve capturar o ID do ticket arrastado 
+    // e o ID da nova coluna (ex: col-andamento) e fazer o update:
+    async function atualizarStatusNoFirebase(ticketId, novoStatus) {
+        const ticketRef = doc(db, "tickets", ticketId);
+        await updateDoc(ticketRef, {
+            status: novoStatus
+        });
+    }
+</script>
+</body>
+</html>
