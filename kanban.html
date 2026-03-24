@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Solicitações | Tripla G&G</title>
+    <title>Painel G&G | Tripla</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    fontFamily: { sans: ['DM Sans', 'sans-serif'] },
                     colors: {
                         brand: {
-                            50: '#f0f6ff', 100: '#e0edff', 200: '#cce0ff',
-                            300: '#a3c7ff', 400: '#75a8ff', 500: '#4783ff',
-                            600: '#1a56db', 700: '#1441a8', 800: '#103380',
-                            900: '#0d275e', 950: '#08173b',
+                            50:'#f0f6ff',100:'#e0edff',200:'#cce0ff',
+                            300:'#a3c7ff',400:'#75a8ff',500:'#4783ff',
+                            600:'#1a56db',700:'#1441a8',800:'#103380',
+                            900:'#0d275e',950:'#08173b'
                         }
                     }
                 }
@@ -25,911 +25,525 @@
         }
     </script>
     <style>
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        ::-webkit-scrollbar{width:5px;height:5px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px}
 
-        .kanban-card { cursor: grab; transition: transform 0.1s ease, box-shadow 0.2s ease; }
-        .kanban-card:active { cursor: grabbing; }
-        .kanban-card.is-dragging { opacity: 0.4; transform: scale(0.95) rotate(2deg); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
-        .kanban-column.drag-over { background-color: #f0f6ff; border-color: #a3c7ff; }
+        .kanban-card{cursor:grab;transition:transform .1s,box-shadow .2s}
+        .kanban-card:active{cursor:grabbing}
+        .kanban-card.is-dragging{opacity:.35;transform:scale(.95) rotate(1.5deg);box-shadow:0 12px 30px rgba(0,0,0,.15)}
+        .kanban-column.drag-over{background-color:#f0f6ff;border-color:#a3c7ff}
 
-        .page { display: none; }
-        .page.active { display: flex; flex-direction: column; flex: 1; min-width: 0; overflow: hidden; }
+        .page{display:none}
+        .page.active{display:flex;flex-direction:column;flex:1;min-width:0;overflow:hidden}
 
-        .nav-link { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #a3c7ff; transition: all 0.15s; font-size: 14px; font-weight: 500; cursor: pointer; }
-        .nav-link:hover { color: white; background: rgba(255,255,255,0.1); }
-        .nav-link.active { background: #1a56db; color: white; box-shadow: 0 4px 14px rgba(26,86,219,0.3); }
-        .nav-link svg { width: 18px; height: 18px; flex-shrink: 0; }
+        .nav-link{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:#a3c7ff;transition:all .15s;font-size:13px;font-weight:500;cursor:pointer}
+        .nav-link:hover{color:white;background:rgba(255,255,255,.1)}
+        .nav-link.active{background:#1a56db;color:white;box-shadow:0 4px 12px rgba(26,86,219,.3)}
+        .nav-link svg{width:16px;height:16px;flex-shrink:0}
 
-        .stat-card { background: white; border-radius: 16px; padding: 20px; border: 1px solid #e2e8f0; }
+        /* Admin-only items hidden by default */
+        .admin-only{display:none}
 
-        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+        .stat-card{background:white;border-radius:14px;padding:18px;border:1px solid #e2e8f0}
+        .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600}
 
-        /* Notification Panel */
-        #notifPanel { transform: translateX(100%); transition: transform 0.3s ease; }
-        #notifPanel.open { transform: translateX(0); }
+        #notifPanel{transform:translateX(100%);transition:transform .3s}
+        #notifPanel.open{transform:translateX(0)}
 
-        /* New Ticket Modal */
-        #newTicketModal { display: none; }
-        #newTicketModal.open { display: flex; }
+        .toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:white;padding:11px 16px;border-radius:10px;font-size:13px;font-weight:500;z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;max-width:320px}
+        .toast.show{transform:translateY(0);opacity:1}
 
-        /* Toast */
-        .toast { position: fixed; bottom: 24px; right: 24px; background: #1e293b; color: white; padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; z-index: 9999; transform: translateY(100px); opacity: 0; transition: all 0.3s ease; pointer-events: none; }
-        .toast.show { transform: translateY(0); opacity: 1; }
+        .fb-dot{width:7px;height:7px;border-radius:50%;background:#10b981;animation:fbp 1.5s infinite;display:inline-block;margin-right:5px}
+        @keyframes fbp{0%,100%{opacity:1}50%{opacity:.3}}
 
-        /* Firebase badge */
-        .firebase-live { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #10b981; font-weight: 600; }
-        .firebase-live::before { content: ''; width: 7px; height: 7px; background: #10b981; border-radius: 50%; animation: pulse 1.5s infinite; display: block; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        table{width:100%;border-collapse:collapse}
+        th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#94a3b8;padding:9px 12px;text-align:left;border-bottom:1px solid #e2e8f0}
+        td{padding:11px 12px;font-size:13px;border-bottom:1px solid #f1f5f9;color:#475569;vertical-align:middle}
+        tr:hover td{background:#f8fafc}
+        tr:last-child td{border-bottom:none}
 
-        .sla-ok { color: #10b981; }
-        .sla-warn { color: #f59e0b; }
-        .sla-over { color: #ef4444; }
+        .progress-bar{height:5px;background:#e2e8f0;border-radius:99px;overflow:hidden}
+        .progress-fill{height:100%;border-radius:99px}
 
-        .filter-btn.active { background: #1e293b !important; color: white !important; }
+        /* Modal overlay */
+        .modal-overlay{position:fixed;inset:0;z-index:50;background:rgba(15,23,42,.45);backdrop-filter:blur(4px);display:none;justify-content:flex-end}
+        .modal-overlay.open{display:flex}
+        .modal-panel{width:100%;max-width:560px;background:white;height:100%;overflow-y:auto;transform:translateX(100%);transition:transform .3s cubic-bezier(.16,1,.3,1);display:flex;flex-direction:column}
+        .modal-overlay.open .modal-panel{transform:translateX(0)}
 
-        /* Table styles */
-        table { width: 100%; border-collapse: collapse; }
-        th { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        td { padding: 12px; font-size: 13px; border-bottom: 1px solid #f1f5f9; color: #475569; vertical-align: middle; }
-        tr:hover td { background: #f8fafc; }
-        tr:last-child td { border-bottom: none; }
+        /* Center modal */
+        .center-modal{position:fixed;inset:0;z-index:60;background:rgba(15,23,42,.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:16px}
+        .center-modal.open{display:flex}
+        .center-modal-box{background:white;border-radius:20px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.2)}
 
-        .progress-bar { height: 6px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
-        .progress-fill { height: 100%; border-radius: 99px; }
+        /* Tag input */
+        .tag{display:inline-flex;align-items:center;gap:4px;background:#e0edff;color:#1441a8;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600}
+        .tag button{background:none;border:none;cursor:pointer;color:#1441a8;line-height:1;padding:0;font-size:14px}
+
+        /* Form fields */
+        .f-input{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;color:#1e293b;outline:none;transition:border-color .15s,box-shadow .15s;background:white}
+        .f-input:focus{border-color:#1a56db;box-shadow:0 0 0 3px rgba(26,86,219,.1)}
+        .f-label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;margin-bottom:5px}
+
+        /* Skeleton */
+        .skeleton{background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);background-size:200% 100%;animation:skel 1.4s infinite;border-radius:8px}
+        @keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+        /* SLA colors */
+        .sla-ok{color:#10b981}.sla-warn{color:#f59e0b}.sla-over{color:#ef4444}
+
+        /* Admin badge */
+        .role-admin{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+        .role-member{background:#f0f6ff;color:#1441a8;border:1px solid #cce0ff}
+        .role-pending{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+        .role-approved{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+
+        /* Auth guard overlay */
+        #authGuard{position:fixed;inset:0;background:white;z-index:200;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+        #authGuard .spin{width:28px;height:28px;border:3px solid #e2e8f0;border-top-color:#1a56db;border-radius:50%;animation:sp 0.7s linear infinite}
+        @keyframes sp{to{transform:rotate(360deg)}}
+
+        .filter-btn.active{background:#1e293b!important;color:white!important}
+
+        /* Ticket card detail field */
+        .detail-row{display:flex;flex-direction:column;gap:3px;padding:10px 0;border-bottom:1px solid #f1f5f9}
+        .detail-row:last-child{border-bottom:none}
+        .detail-row .dk{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#94a3b8}
+        .detail-row .dv{font-size:13px;color:#1e293b;font-weight:500}
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans antialiased h-screen flex overflow-hidden">
 
+<!-- Auth guard -->
+<div id="authGuard">
+    <svg width="36" height="36" viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="8" fill="#1a56db"/><path d="M12 28L20 12L28 28H23L20 22L17 28H12Z" fill="white"/><path d="M20 22L23 28H28L20 12V22Z" fill="#75a8ff"/></svg>
+    <div class="spin"></div>
+    <p style="font-size:13px;color:#64748b">Verificando autenticação...</p>
+</div>
+
 <!-- ===================== SIDEBAR ===================== -->
-<aside class="w-64 bg-brand-950 text-white flex flex-col shadow-xl z-20 flex-shrink-0">
-    <div class="h-20 flex items-center gap-3 px-6 border-b border-brand-800/50">
-        <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
-            <rect width="40" height="40" rx="8" fill="#1a56db"/>
-            <path d="M12 28L20 12L28 28H23L20 22L17 28H12Z" fill="white"/>
-            <path d="M20 22L23 28H28L20 12V22Z" fill="#75a8ff"/>
-        </svg>
+<aside class="w-60 bg-brand-950 text-white flex flex-col shadow-xl z-20 flex-shrink-0" id="sidebar" style="display:none">
+    <div class="h-16 flex items-center gap-3 px-5 border-b border-brand-800/50">
+        <svg width="28" height="28" viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="8" fill="#1a56db"/><path d="M12 28L20 12L28 28H23L20 22L17 28H12Z" fill="white"/><path d="M20 22L23 28H28L20 12V22Z" fill="#75a8ff"/></svg>
         <div>
-            <span class="text-xl font-extrabold tracking-tight text-white block leading-none">tripla</span>
+            <span class="text-lg font-extrabold tracking-tight text-white block leading-none">tripla</span>
             <span class="text-[10px] text-brand-300 font-medium tracking-wider uppercase">Gente & Gestão</span>
         </div>
     </div>
 
-    <nav class="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
-        <div class="nav-link" data-page="dashboard">
-            <i data-lucide="layout-dashboard"></i>
-            <span>Dashboard</span>
-        </div>
-        <div class="nav-link active" data-page="kanban">
-            <i data-lucide="kanban-square"></i>
-            <span>Quadro de Solicitações</span>
-        </div>
-        <div class="nav-link" data-page="directory">
-            <i data-lucide="users"></i>
-            <span>Diretório de Pessoas</span>
-        </div>
-        <div class="nav-link" data-page="reports">
-            <i data-lucide="pie-chart"></i>
-            <span>Relatórios e SLAs</span>
+    <nav class="flex-1 py-5 px-3 space-y-0.5 overflow-y-auto">
+        <div class="nav-link" data-page="dashboard"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></div>
+        <div class="nav-link active" data-page="kanban"><i data-lucide="kanban-square"></i><span>Quadro</span></div>
+        <div class="nav-link" data-page="directory"><i data-lucide="users"></i><span>Equipe G&G</span></div>
+        <div class="nav-link" data-page="reports"><i data-lucide="pie-chart"></i><span>Relatórios & SLAs</span></div>
+
+        <div class="pt-5 mt-4 border-t border-brand-800/50 admin-only" id="navAdminSection">
+            <p class="text-[10px] font-bold text-brand-400 uppercase tracking-wider mb-1.5 px-3">Administração</p>
+            <div class="nav-link" data-page="admin"><i data-lucide="shield"></i><span>Painel Admin</span></div>
         </div>
 
-        <div class="pt-6 mt-6 border-t border-brand-800/50">
-            <p class="text-[11px] font-semibold text-brand-400 uppercase tracking-wider mb-2 px-3">Configurações</p>
-            <div class="nav-link" data-page="preferences">
-                <i data-lucide="settings"></i>
-                <span>Preferências</span>
-            </div>
-            <div class="nav-link" data-page="employees">
-                <i data-lucide="user-plus"></i>
-                <span>Cadastro de Funcionários</span>
-            </div>
+        <div class="pt-4 mt-3 border-t border-brand-800/50">
+            <p class="text-[10px] font-bold text-brand-400 uppercase tracking-wider mb-1.5 px-3">Config</p>
+            <div class="nav-link" data-page="preferences"><i data-lucide="settings"></i><span>Preferências</span></div>
         </div>
     </nav>
 
     <div class="p-4 border-t border-brand-800/50 bg-brand-900/30">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-brand-600 flex items-center justify-center font-bold text-sm">CR</div>
-            <div>
-                <p class="text-sm font-semibold text-white">Carla RH</p>
-                <p class="text-xs text-brand-300">Business Partner</p>
+            <div id="sidebarAvatar" class="w-9 h-9 rounded-full bg-brand-600 flex items-center justify-center font-bold text-sm flex-shrink-0">--</div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-white truncate" id="sidebarName">...</p>
+                <p class="text-xs text-brand-300 truncate" id="sidebarRole">...</p>
             </div>
         </div>
-        <div class="mt-2 firebase-live">Conectado ao Firebase</div>
+        <button onclick="doLogout()" class="mt-3 w-full flex items-center justify-center gap-2 text-xs text-brand-300 hover:text-white hover:bg-brand-800 transition-colors rounded-lg py-1.5 px-2">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Sair
+        </button>
+        <div class="mt-2 flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
+            <span class="fb-dot"></span>Firebase conectado
+        </div>
     </div>
 </aside>
 
 <!-- ===================== MAIN ===================== -->
-<div class="flex-1 flex flex-col h-screen min-w-0 overflow-hidden relative">
+<div class="flex-1 flex flex-col h-screen min-w-0 overflow-hidden relative" id="mainContent" style="display:none">
 
-<!-- ===== HEADER (shared) ===== -->
-<header class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 flex-shrink-0">
+<!-- HEADER -->
+<header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-5 z-10 flex-shrink-0">
     <div>
-        <h1 class="text-xl font-bold text-slate-800" id="pageTitle">Quadro de Solicitações</h1>
-        <p class="text-sm text-slate-500" id="pageSubtitle">Acompanhamento e execução de tickets G&G</p>
+        <h1 class="text-lg font-bold text-slate-800" id="pageTitle">Quadro de Solicitações</h1>
+        <p class="text-xs text-slate-500" id="pageSubtitle">Acompanhamento em tempo real</p>
     </div>
     <div class="flex items-center gap-3">
         <div class="relative hidden sm:block">
-            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input id="globalSearch" type="text" placeholder="Buscar..." class="pl-9 pr-4 py-2 bg-slate-100 border border-transparent rounded-lg text-sm focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition-all w-56">
+            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input id="globalSearch" type="text" placeholder="Buscar ticket..." class="pl-8 pr-4 py-1.5 bg-slate-100 border border-transparent rounded-lg text-sm focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition-all w-48">
         </div>
-        <button id="notifBtn" class="relative w-10 h-10 rounded-full bg-slate-100 text-slate-600 hover:bg-brand-50 hover:text-brand-600 transition-colors flex items-center justify-center">
-            <i data-lucide="bell" class="w-5 h-5"></i>
-            <span id="notifBadge" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+        <button id="notifBtn" class="relative w-9 h-9 rounded-full bg-slate-100 text-slate-600 hover:bg-brand-50 hover:text-brand-600 transition-colors flex items-center justify-center">
+            <i data-lucide="bell" class="w-4 h-4"></i>
+            <span id="notifBadge" class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white hidden"></span>
         </button>
-        <button id="newTicketBtn" class="hidden sm:flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            Novo Ticket
+        <button id="newTicketBtn" class="hidden sm:flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors shadow-sm">
+            <i data-lucide="plus" class="w-4 h-4"></i> Novo Ticket
         </button>
     </div>
 </header>
 
-<!-- ============================= PAGE: DASHBOARD ============================= -->
-<div id="page-dashboard" class="page overflow-y-auto p-6 gap-6 flex-col">
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="stat-card">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium text-slate-500">Tickets Abertos</span>
-                <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center"><i data-lucide="inbox" class="w-4 h-4 text-blue-600"></i></div>
-            </div>
-            <p class="text-3xl font-extrabold text-slate-800">12</p>
-            <p class="text-xs text-emerald-600 font-medium mt-1">↓ 3 desde semana passada</p>
-        </div>
-        <div class="stat-card">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium text-slate-500">Em Execução</span>
-                <div class="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center"><i data-lucide="zap" class="w-4 h-4 text-amber-600"></i></div>
-            </div>
-            <p class="text-3xl font-extrabold text-slate-800">5</p>
-            <p class="text-xs text-amber-600 font-medium mt-1">2 com SLA crítico</p>
-        </div>
-        <div class="stat-card">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium text-slate-500">Concluídos (mês)</span>
-                <div class="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i></div>
-            </div>
-            <p class="text-3xl font-extrabold text-slate-800">38</p>
-            <p class="text-xs text-emerald-600 font-medium mt-1">↑ 12% vs mês anterior</p>
-        </div>
-        <div class="stat-card">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium text-slate-500">SLA Médio</span>
-                <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center"><i data-lucide="clock" class="w-4 h-4 text-purple-600"></i></div>
-            </div>
-            <p class="text-3xl font-extrabold text-slate-800">18h</p>
-            <p class="text-xs text-emerald-600 font-medium mt-1">Meta: 24h ✓</p>
-        </div>
+<!-- ===== DASHBOARD ===== -->
+<div id="page-dashboard" class="page overflow-y-auto p-5 gap-4 flex-col">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="stat-card"><div class="flex items-center justify-between mb-2"><span class="text-xs font-medium text-slate-500">Abertos</span><div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center"><i data-lucide="inbox" class="w-4 h-4 text-blue-600"></i></div></div><p class="text-3xl font-extrabold text-slate-800" id="kpi-open">—</p><p class="text-xs text-slate-500 mt-1">tickets na triagem</p></div>
+        <div class="stat-card"><div class="flex items-center justify-between mb-2"><span class="text-xs font-medium text-slate-500">Em Execução</span><div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center"><i data-lucide="zap" class="w-4 h-4 text-amber-600"></i></div></div><p class="text-3xl font-extrabold text-slate-800" id="kpi-wip">—</p><p class="text-xs text-amber-600 mt-1" id="kpi-sla-risk">verificando SLA...</p></div>
+        <div class="stat-card"><div class="flex items-center justify-between mb-2"><span class="text-xs font-medium text-slate-500">Concluídos (30d)</span><div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i></div></div><p class="text-3xl font-extrabold text-slate-800" id="kpi-done">—</p></div>
+        <div class="stat-card"><div class="flex items-center justify-between mb-2"><span class="text-xs font-medium text-slate-500">Total Equipe G&G</span><div class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center"><i data-lucide="users" class="w-4 h-4 text-purple-600"></i></div></div><p class="text-3xl font-extrabold text-slate-800" id="kpi-team">—</p></div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <!-- Distribuição por área -->
-        <div class="stat-card lg:col-span-2">
-            <h3 class="font-bold text-slate-700 mb-4">Distribuição por Área</h3>
-            <div class="space-y-3">
-                <div>
-                    <div class="flex justify-between text-sm mb-1"><span class="text-slate-600">Recrutamento & Seleção</span><span class="font-semibold text-slate-800">14</span></div>
-                    <div class="progress-bar"><div class="progress-fill bg-indigo-500" style="width:45%"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-sm mb-1"><span class="text-slate-600">Depto. Pessoal</span><span class="font-semibold text-slate-800">10</span></div>
-                    <div class="progress-bar"><div class="progress-fill bg-amber-500" style="width:32%"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-sm mb-1"><span class="text-slate-600">Treinamento & Desenvolvimento</span><span class="font-semibold text-slate-800">7</span></div>
-                    <div class="progress-bar"><div class="progress-fill bg-fuchsia-500" style="width:22%"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-sm mb-1"><span class="text-slate-600">Comunicados & Clima</span><span class="font-semibold text-slate-800">7</span></div>
-                    <div class="progress-bar"><div class="progress-fill bg-rose-500" style="width:22%"></div></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tickets recentes -->
-        <div class="stat-card">
-            <h3 class="font-bold text-slate-700 mb-4">Atividade Recente</h3>
-            <div class="space-y-3">
-                <div class="flex items-start gap-3">
-                    <div class="w-2 h-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0"></div>
-                    <div><p class="text-xs font-semibold text-slate-700">Novo ticket criado</p><p class="text-xs text-slate-500">Vaga Dev Front-end Sênior</p><p class="text-[11px] text-slate-400">Há 15 min</p></div>
-                </div>
-                <div class="flex items-start gap-3">
-                    <div class="w-2 h-2 rounded-full bg-amber-500 mt-1.5 flex-shrink-0"></div>
-                    <div><p class="text-xs font-semibold text-slate-700">Status alterado</p><p class="text-xs text-slate-500">Workshop de Liderança → Em Execução</p><p class="text-[11px] text-slate-400">Há 2h</p></div>
-                </div>
-                <div class="flex items-start gap-3">
-                    <div class="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0"></div>
-                    <div><p class="text-xs font-semibold text-slate-700">Ticket concluído</p><p class="text-xs text-slate-500">Atestado Médico #8460</p><p class="text-[11px] text-slate-400">Ontem</p></div>
-                </div>
-                <div class="flex items-start gap-3">
-                    <div class="w-2 h-2 rounded-full bg-red-500 mt-1.5 flex-shrink-0"></div>
-                    <div><p class="text-xs font-semibold text-slate-700">SLA em risco</p><p class="text-xs text-slate-500">TriplaPay Comunicado</p><p class="text-[11px] text-slate-400">Vence em 2h</p></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Top responsáveis -->
     <div class="stat-card">
-        <h3 class="font-bold text-slate-700 mb-4">Desempenho da Equipe G&G</h3>
-        <div class="overflow-x-auto">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Responsável</th>
-                        <th>Em andamento</th>
-                        <th>Concluídos (mês)</th>
-                        <th>SLA Médio</th>
-                        <th>Taxa de Conclusão</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold">CR</div><span class="font-medium text-slate-800">Carla RH</span></div></td>
-                        <td>3</td><td>18</td><td>16h</td>
-                        <td><div class="flex items-center gap-2"><div class="progress-bar flex-1"><div class="progress-fill bg-emerald-500" style="width:92%"></div></div><span class="text-xs font-medium text-emerald-600">92%</span></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 text-xs font-bold">PT</div><span class="font-medium text-slate-800">Pedro T&D</span></div></td>
-                        <td>2</td><td>12</td><td>22h</td>
-                        <td><div class="flex items-center gap-2"><div class="progress-bar flex-1"><div class="progress-fill bg-amber-500" style="width:78%"></div></div><span class="text-xs font-medium text-amber-600">78%</span></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-rose-100 flex items-center justify-center text-rose-700 text-xs font-bold">AS</div><span class="font-medium text-slate-800">Ana DP</span></div></td>
-                        <td>1</td><td>8</td><td>19h</td>
-                        <td><div class="flex items-center gap-2"><div class="progress-bar flex-1"><div class="progress-fill bg-emerald-500" style="width:85%"></div></div><span class="text-xs font-medium text-emerald-600">85%</span></div></td>
-                    </tr>
-                </tbody>
+        <h3 class="font-bold text-slate-700 text-sm mb-3">Atividade Recente</h3>
+        <div id="recentActivity" class="space-y-2 text-sm text-slate-500">
+            <div class="skeleton h-8 w-full"></div>
+            <div class="skeleton h-8 w-3/4"></div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="stat-card">
+            <h3 class="font-bold text-slate-700 text-sm mb-3">Tickets por Categoria</h3>
+            <div id="catBreakdown" class="space-y-2">
+                <div class="skeleton h-6 w-full"></div>
+                <div class="skeleton h-6 w-5/6"></div>
+                <div class="skeleton h-6 w-4/6"></div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <h3 class="font-bold text-slate-700 text-sm mb-3">SLA por Categoria</h3>
+            <table id="slaDash">
+                <thead><tr><th>Categoria</th><th>Meta</th><th>Status</th></tr></thead>
+                <tbody id="slaDashBody"></tbody>
             </table>
         </div>
     </div>
 </div>
 
-<!-- ============================= PAGE: KANBAN ============================= -->
+<!-- ===== KANBAN ===== -->
 <div id="page-kanban" class="page active">
-    <!-- Filters Bar -->
-    <div class="bg-white border-b border-slate-200 px-6 py-3 flex items-center gap-2 overflow-x-auto flex-shrink-0">
-        <span class="text-sm font-semibold text-slate-500 mr-2 flex-shrink-0">Filtrar:</span>
-        <button class="filter-btn active px-4 py-1.5 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="all">Todos</button>
-        <button class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="rs">Recrutamento</button>
-        <button class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="td">Treinamento</button>
-        <button class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="dp">Depto. Pessoal</button>
-        <button class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="clima">Comunicados & Clima</button>
+    <div class="bg-white border-b border-slate-200 px-5 py-2.5 flex items-center gap-2 overflow-x-auto flex-shrink-0">
+        <span class="text-xs font-semibold text-slate-500 mr-1 flex-shrink-0">Filtrar:</span>
+        <button class="filter-btn active px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="all">Todos</button>
+        <button class="filter-btn px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="rs">Recrutamento</button>
+        <button class="filter-btn px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="td">Treinamento</button>
+        <button class="filter-btn px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="dp">Depto. Pessoal</button>
+        <button class="filter-btn px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="clima">Comunicados</button>
     </div>
 
-    <!-- Board -->
     <div class="flex-1 overflow-x-auto overflow-y-hidden">
-        <div class="h-full flex gap-5 p-5 min-w-max items-start">
+        <div class="h-full flex gap-4 p-4 min-w-max items-start">
 
-            <!-- Column: Novas -->
-            <div class="kanban-column flex flex-col w-80 max-h-full bg-slate-100 rounded-2xl border border-slate-200/60 transition-colors duration-200" data-status="novas">
-                <div class="p-4 flex items-center justify-between border-b border-slate-200/60">
-                    <div class="flex items-center gap-2">
-                        <div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
-                        <h2 class="font-bold text-slate-700 text-sm">Novas (Triagem)</h2>
-                    </div>
-                    <span class="col-count bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">3</span>
+            <!-- Col Novas -->
+            <div class="kanban-column flex flex-col w-76 max-h-full bg-slate-100 rounded-2xl border border-slate-200/60 transition-colors duration-200" style="width:300px" data-status="novas">
+                <div class="px-4 py-3 flex items-center justify-between border-b border-slate-200/60">
+                    <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div><h2 class="font-bold text-slate-700 text-sm">Novas (Triagem)</h2></div>
+                    <span class="col-count bg-slate-200 text-slate-600 text-xs font-bold px-2 py-0.5 rounded-full">0</span>
                 </div>
-                <div class="p-3 flex-1 overflow-y-auto space-y-3 column-content" id="col-novas">
-                    <div class="kanban-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand-300" draggable="true" data-type="clima" data-id="8492" onclick="openTicketModal('8492')">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="badge bg-rose-50 text-rose-600">Comunicado</span>
-                            <span class="text-xs text-slate-400 font-mono">#8492</span>
-                        </div>
-                        <h3 class="font-semibold text-slate-800 text-sm mb-1 leading-snug">Disparo de Lançamento: Novo Produto TriplaPay</h3>
-                        <p class="text-xs text-slate-500 mb-3 line-clamp-2">Solicitação de disparo para toda a empresa avisando sobre o lançamento. Precisa de arte.</p>
-                        <div class="flex items-center justify-between mt-auto">
-                            <div class="flex items-center gap-2">
-                                <div class="w-6 h-6 rounded-full bg-brand-100 flex items-center justify-center text-[10px] font-bold text-brand-700">MK</div>
-                                <span class="text-xs text-slate-500">Hoje</span>
-                            </div>
-                            <span class="flex items-center gap-1 text-[10px] font-semibold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
-                                <i data-lucide="clock" class="w-3 h-3"></i> SLA: 2h restantes
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="kanban-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand-300" draggable="true" data-type="rs" data-id="8493" onclick="openTicketModal('8493')">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="badge bg-indigo-50 text-indigo-600">Recrutamento</span>
-                            <span class="text-xs text-slate-400 font-mono">#8493</span>
-                        </div>
-                        <h3 class="font-semibold text-slate-800 text-sm mb-1 leading-snug">Vaga: Desenvolvedor Front-end Sênior</h3>
-                        <p class="text-xs text-slate-500 mb-3 line-clamp-2">Aumento de quadro. Orçamento aprovado. Modelo remoto.</p>
-                        <div class="flex items-center justify-between mt-auto">
-                            <div class="flex items-center gap-2">
-                                <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600">TI</div>
-                                <span class="text-xs text-slate-500">Ontem</span>
-                            </div>
-                            <i data-lucide="paperclip" class="w-3.5 h-3.5 text-slate-400"></i>
-                        </div>
-                    </div>
-
-                    <div class="kanban-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand-300" draggable="true" data-type="dp" data-id="8495" onclick="openTicketModal('8495')">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="badge bg-amber-50 text-amber-600">Depto. Pessoal</span>
-                            <span class="text-xs text-slate-400 font-mono">#8495</span>
-                        </div>
-                        <h3 class="font-semibold text-slate-800 text-sm mb-1 leading-snug">Alteração de Período de Férias</h3>
-                        <p class="text-xs text-slate-500 mb-3 line-clamp-2">Colaborador João Silva solicitou alteração para Dezembro.</p>
-                        <div class="flex items-center justify-between mt-auto">
-                            <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600">VD</div>
-                            <span class="text-xs text-slate-500">Hoje</span>
-                        </div>
-                    </div>
-                </div>
+                <div class="p-2.5 flex-1 overflow-y-auto space-y-2.5 column-content" id="col-novas"></div>
             </div>
 
-            <!-- Column: Em Execução -->
-            <div class="kanban-column flex flex-col w-80 max-h-full bg-slate-100 rounded-2xl border border-slate-200/60 transition-colors duration-200" data-status="andamento">
-                <div class="p-4 flex items-center justify-between border-b border-slate-200/60">
-                    <div class="flex items-center gap-2">
-                        <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
-                        <h2 class="font-bold text-slate-700 text-sm">Em Execução</h2>
-                    </div>
-                    <span class="col-count bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">1</span>
+            <!-- Col Em Execução -->
+            <div class="kanban-column flex flex-col max-h-full bg-slate-100 rounded-2xl border border-slate-200/60 transition-colors duration-200" style="width:300px" data-status="andamento">
+                <div class="px-4 py-3 flex items-center justify-between border-b border-slate-200/60">
+                    <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div><h2 class="font-bold text-slate-700 text-sm">Em Execução</h2></div>
+                    <span class="col-count bg-slate-200 text-slate-600 text-xs font-bold px-2 py-0.5 rounded-full">0</span>
                 </div>
-                <div class="p-3 flex-1 overflow-y-auto space-y-3 column-content" id="col-andamento">
-                    <div class="kanban-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 border-l-4 border-l-amber-400 hover:shadow-md" draggable="true" data-type="td" data-id="8480" onclick="openTicketModal('8480')">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="badge bg-fuchsia-50 text-fuchsia-600">Treinamento</span>
-                            <span class="text-xs text-slate-400 font-mono">#8480</span>
-                        </div>
-                        <h3 class="font-semibold text-slate-800 text-sm mb-1 leading-snug">Workshop de Liderança In-Company</h3>
-                        <p class="text-xs text-slate-500 mb-2 line-clamp-2">Cotação com fornecedores de treinamento para 15 líderes.</p>
-                        <div class="mb-3">
-                            <div class="flex justify-between text-[10px] text-slate-500 mb-1"><span>Progresso</span><span>50%</span></div>
-                            <div class="progress-bar"><div class="progress-fill bg-amber-400" style="width:50%"></div></div>
-                        </div>
-                        <div class="flex items-center justify-between mt-auto">
-                            <div class="w-6 h-6 rounded-full bg-brand-100 flex items-center justify-center text-[10px] font-bold text-brand-700">CR</div>
-                            <span class="text-xs text-slate-500">Há 2 dias</span>
-                        </div>
-                    </div>
-                </div>
+                <div class="p-2.5 flex-1 overflow-y-auto space-y-2.5 column-content" id="col-andamento"></div>
             </div>
 
-            <!-- Column: Aguardando -->
-            <div class="kanban-column flex flex-col w-80 max-h-full bg-slate-100 rounded-2xl border border-slate-200/60 transition-colors duration-200" data-status="aguardando">
-                <div class="p-4 flex items-center justify-between border-b border-slate-200/60">
-                    <div class="flex items-center gap-2">
-                        <div class="w-2.5 h-2.5 rounded-full bg-purple-500"></div>
-                        <h2 class="font-bold text-slate-700 text-sm">Aguardando Terceiros</h2>
-                    </div>
-                    <span class="col-count bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">1</span>
+            <!-- Col Aguardando -->
+            <div class="kanban-column flex flex-col max-h-full bg-slate-100 rounded-2xl border border-slate-200/60 transition-colors duration-200" style="width:300px" data-status="aguardando">
+                <div class="px-4 py-3 flex items-center justify-between border-b border-slate-200/60">
+                    <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full bg-purple-500"></div><h2 class="font-bold text-slate-700 text-sm">Aguardando Terceiros</h2></div>
+                    <span class="col-count bg-slate-200 text-slate-600 text-xs font-bold px-2 py-0.5 rounded-full">0</span>
                 </div>
-                <div class="p-3 flex-1 overflow-y-auto space-y-3 column-content" id="col-aguardando">
-                    <div class="kanban-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 opacity-80 hover:opacity-100 transition-opacity" draggable="true" data-type="dp" data-id="8475" onclick="openTicketModal('8475')">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="badge bg-amber-50 text-amber-600">Depto. Pessoal</span>
-                            <span class="text-xs text-slate-400 font-mono">#8475</span>
-                        </div>
-                        <h3 class="font-semibold text-slate-800 text-sm mb-1 leading-snug">Desligamento: Analista Financeiro</h3>
-                        <div class="flex items-center gap-1 text-[10px] text-purple-600 bg-purple-50 px-2 py-1 rounded mb-3 w-fit">
-                            <i data-lucide="alert-circle" class="w-3 h-3"></i> Aguardando Exame Demissional
-                        </div>
-                        <div class="flex items-center justify-between pt-2 border-t border-slate-100">
-                            <span class="text-xs text-slate-500">Resp: RH Legal</span>
-                        </div>
-                    </div>
-                </div>
+                <div class="p-2.5 flex-1 overflow-y-auto space-y-2.5 column-content" id="col-aguardando"></div>
             </div>
 
-            <!-- Column: Concluído -->
-            <div class="kanban-column flex flex-col w-80 max-h-full bg-slate-100/50 rounded-2xl border border-slate-200/60 border-dashed transition-colors duration-200" data-status="concluido">
-                <div class="p-4 flex items-center justify-between border-b border-slate-200/60">
-                    <div class="flex items-center gap-2">
-                        <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
-                        <h2 class="font-bold text-slate-700 text-sm">Concluídas (7 dias)</h2>
-                    </div>
-                    <span class="col-count bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">1</span>
+            <!-- Col Concluído -->
+            <div class="kanban-column flex flex-col max-h-full bg-slate-100/60 rounded-2xl border border-dashed border-slate-200/60 transition-colors duration-200" style="width:300px" data-status="concluido">
+                <div class="px-4 py-3 flex items-center justify-between border-b border-slate-200/60">
+                    <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div><h2 class="font-bold text-slate-700 text-sm">Concluídas</h2></div>
+                    <span class="col-count bg-slate-200 text-slate-600 text-xs font-bold px-2 py-0.5 rounded-full">0</span>
                 </div>
-                <div class="p-3 flex-1 overflow-y-auto space-y-3 column-content" id="col-concluido">
-                    <div class="kanban-card bg-slate-50 p-4 rounded-xl shadow-sm border border-slate-200" draggable="true" data-type="dp" data-id="8460">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="badge bg-slate-200 text-slate-500 line-through">Depto. Pessoal</span>
-                            <span class="text-xs text-slate-400 font-mono">#8460</span>
-                        </div>
-                        <h3 class="font-semibold text-slate-600 text-sm mb-1 line-through">Atestado Médico (3 dias)</h3>
-                        <div class="flex items-center gap-1 text-[10px] text-emerald-600 font-medium mt-3">
-                            <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Finalizado ontem
-                        </div>
-                    </div>
-                </div>
+                <div class="p-2.5 flex-1 overflow-y-auto space-y-2.5 column-content" id="col-concluido"></div>
             </div>
 
         </div>
     </div>
 </div>
 
-<!-- ============================= PAGE: DIRECTORY ============================= -->
-<div id="page-directory" class="page overflow-y-auto p-6">
-    <div class="flex items-center justify-between mb-5">
+<!-- ===== DIRECTORY ===== -->
+<div id="page-directory" class="page overflow-y-auto p-5">
+    <div class="flex items-center justify-between mb-4">
         <div>
-            <h2 class="text-lg font-bold text-slate-800">Diretório de Pessoas</h2>
-            <p class="text-sm text-slate-500">24 colaboradores ativos</p>
+            <h2 class="text-base font-bold text-slate-800">Equipe G&G com Acesso</h2>
+            <p class="text-xs text-slate-500">Membros aprovados no painel</p>
         </div>
-        <div class="flex gap-2">
-            <select class="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-brand-200">
-                <option>Todos os departamentos</option>
-                <option>Tecnologia</option>
-                <option>Marketing</option>
-                <option>Financeiro</option>
-                <option>RH</option>
-            </select>
-            <button onclick="showPage('employees')" class="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
-                <i data-lucide="user-plus" class="w-4 h-4"></i> Cadastrar
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" id="teamGrid">
+        <div class="skeleton h-40 rounded-2xl"></div>
+        <div class="skeleton h-40 rounded-2xl"></div>
+        <div class="skeleton h-40 rounded-2xl"></div>
+    </div>
+</div>
+
+<!-- ===== REPORTS ===== -->
+<div id="page-reports" class="page overflow-y-auto p-5 flex-col gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <div class="stat-card"><h3 class="font-bold text-slate-700 text-sm mb-1">SLA Global</h3><p class="text-4xl font-extrabold text-emerald-600" id="rep-sla">—%</p><p class="text-xs text-slate-500 mt-1">tickets dentro do prazo</p></div>
+        <div class="stat-card"><h3 class="font-bold text-slate-700 text-sm mb-1">Concluídos (30d)</h3><p class="text-4xl font-extrabold text-brand-600" id="rep-done">—</p></div>
+        <div class="stat-card"><h3 class="font-bold text-slate-700 text-sm mb-1">Em aberto agora</h3><p class="text-4xl font-extrabold text-amber-600" id="rep-open">—</p></div>
+    </div>
+
+    <div class="stat-card">
+        <h3 class="font-bold text-slate-700 text-sm mb-3">SLA por Categoria (configurado em Preferências)</h3>
+        <table>
+            <thead><tr><th>Categoria</th><th>Meta (h)</th><th>Descrição</th></tr></thead>
+            <tbody id="slaConfigTable"></tbody>
+        </table>
+    </div>
+
+    <div class="stat-card">
+        <h3 class="font-bold text-slate-700 text-sm mb-3">Todos os Tickets</h3>
+        <div class="overflow-x-auto">
+            <table>
+                <thead><tr><th>ID</th><th>Título</th><th>Categoria</th><th>Solicitante</th><th>Responsável</th><th>Criado</th><th>Status</th></tr></thead>
+                <tbody id="allTicketsTable"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ===== PREFERENCES ===== -->
+<div id="page-preferences" class="page overflow-y-auto p-5">
+    <div class="max-w-xl mx-auto space-y-5">
+        <div class="stat-card">
+            <h3 class="font-bold text-slate-700 mb-4">SLAs por Categoria</h3>
+            <p class="text-xs text-slate-500 mb-4">Define o prazo máximo (em horas) para conclusão de cada tipo de ticket.</p>
+            <div class="space-y-3" id="slaSettings">
+                <div class="flex items-center justify-between"><span class="text-sm text-slate-700">Comunicados & Clima</span><div class="flex items-center gap-2"><input type="number" id="sla-clima" value="24" class="w-20 f-input text-center text-sm"><span class="text-xs text-slate-500">h</span></div></div>
+                <div class="flex items-center justify-between"><span class="text-sm text-slate-700">Recrutamento & Seleção</span><div class="flex items-center gap-2"><input type="number" id="sla-rs" value="72" class="w-20 f-input text-center text-sm"><span class="text-xs text-slate-500">h</span></div></div>
+                <div class="flex items-center justify-between"><span class="text-sm text-slate-700">Treinamento & Desenvolvimento</span><div class="flex items-center gap-2"><input type="number" id="sla-td" value="48" class="w-20 f-input text-center text-sm"><span class="text-xs text-slate-500">h</span></div></div>
+                <div class="flex items-center justify-between"><span class="text-sm text-slate-700">Departamento Pessoal</span><div class="flex items-center gap-2"><input type="number" id="sla-dp" value="48" class="w-20 f-input text-center text-sm"><span class="text-xs text-slate-500">h</span></div></div>
+            </div>
+            <button onclick="saveSLAs()" class="mt-4 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">Salvar SLAs</button>
+        </div>
+
+        <div class="stat-card">
+            <h3 class="font-bold text-slate-700 mb-3">Meu Perfil</h3>
+            <p class="text-sm text-slate-600 mb-1">Nome: <span class="font-semibold" id="prof-nome">—</span></p>
+            <p class="text-sm text-slate-600 mb-1">E-mail: <span class="font-semibold" id="prof-email">—</span></p>
+            <p class="text-sm text-slate-600 mb-1">Função: <span class="font-semibold" id="prof-funcao">—</span></p>
+            <p class="text-sm text-slate-600">Perfil: <span class="font-semibold" id="prof-role">—</span></p>
+        </div>
+    </div>
+</div>
+
+<!-- ===== ADMIN ===== -->
+<div id="page-admin" class="page overflow-y-auto p-5 flex-col gap-4">
+    <!-- Tabs -->
+    <div class="flex gap-2 border-b border-slate-200 pb-0">
+        <button class="admin-tab-btn active px-4 py-2 text-sm font-semibold text-brand-600 border-b-2 border-brand-600" data-admin-tab="users" onclick="switchAdminTab('users')">Usuários</button>
+        <button class="admin-tab-btn px-4 py-2 text-sm font-semibold text-slate-500 border-b-2 border-transparent hover:text-slate-700" data-admin-tab="form" onclick="switchAdminTab('form')">Editor do Formulário</button>
+    </div>
+
+    <!-- Users Tab -->
+    <div id="admin-tab-users" class="flex-col gap-4 flex">
+        <div class="stat-card">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-bold text-slate-700 text-sm">Gerenciar Membros da Equipe G&G</h3>
+                <span class="text-xs text-slate-500">Aprovação e controle de acesso</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table>
+                    <thead><tr><th>Nome</th><th>E-mail</th><th>Função</th><th>Perfil</th><th>Status</th><th>Ações</th></tr></thead>
+                    <tbody id="usersAdminTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Editor Tab -->
+    <div id="admin-tab-form" class="flex-col gap-4 hidden">
+        <div class="stat-card">
+            <h3 class="font-bold text-slate-700 text-sm mb-1">Editor do Formulário de Solicitação</h3>
+            <p class="text-xs text-slate-500 mb-4">Personalize as opções dos campos do formulário público (index.html). As alterações são salvas no Firestore e carregadas pelo formulário automaticamente.</p>
+
+            <div class="space-y-5">
+                <!-- Departamentos -->
+                <div>
+                    <label class="f-label">Departamentos disponíveis no formulário</label>
+                    <div id="deptoTags" class="flex flex-wrap gap-2 mb-2 min-h-8"></div>
+                    <div class="flex gap-2">
+                        <input type="text" id="newDepto" placeholder="Novo departamento..." class="f-input flex-1 text-sm">
+                        <button onclick="addConfigItem('departamentos','newDepto','deptoTags')" class="bg-brand-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-brand-700">Adicionar</button>
+                    </div>
+                </div>
+
+                <!-- Motivos de Vaga (R&S) -->
+                <div>
+                    <label class="f-label">Motivos de Vaga (Recrutamento)</label>
+                    <div id="motivoTags" class="flex flex-wrap gap-2 mb-2 min-h-8"></div>
+                    <div class="flex gap-2">
+                        <input type="text" id="newMotivo" placeholder="Novo motivo..." class="f-input flex-1 text-sm">
+                        <button onclick="addConfigItem('motivosVaga','newMotivo','motivoTags')" class="bg-brand-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-brand-700">Adicionar</button>
+                    </div>
+                </div>
+
+                <!-- Tipos T&D -->
+                <div>
+                    <label class="f-label">Tipos de Treinamento</label>
+                    <div id="tdTags" class="flex flex-wrap gap-2 mb-2 min-h-8"></div>
+                    <div class="flex gap-2">
+                        <input type="text" id="newTd" placeholder="Novo tipo..." class="f-input flex-1 text-sm">
+                        <button onclick="addConfigItem('tiposTreinamento','newTd','tdTags')" class="bg-brand-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-brand-700">Adicionar</button>
+                    </div>
+                </div>
+
+                <!-- Categorias DP -->
+                <div>
+                    <label class="f-label">Categorias Depto. Pessoal</label>
+                    <div id="dpTags" class="flex flex-wrap gap-2 mb-2 min-h-8"></div>
+                    <div class="flex gap-2">
+                        <input type="text" id="newDp" placeholder="Nova categoria..." class="f-input flex-1 text-sm">
+                        <button onclick="addConfigItem('categoriasDP','newDp','dpTags')" class="bg-brand-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-brand-700">Adicionar</button>
+                    </div>
+                </div>
+
+                <!-- Tipos Comunicado -->
+                <div>
+                    <label class="f-label">Tipos de Comunicado</label>
+                    <div id="climaTags" class="flex flex-wrap gap-2 mb-2 min-h-8"></div>
+                    <div class="flex gap-2">
+                        <input type="text" id="newClima" placeholder="Novo tipo..." class="f-input flex-1 text-sm">
+                        <button onclick="addConfigItem('tiposComunicado','newClima','climaTags')" class="bg-brand-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-brand-700">Adicionar</button>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="saveFormConfig()" class="mt-5 bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
+                <i data-lucide="save" class="w-4 h-4"></i> Salvar Configurações do Formulário
             </button>
         </div>
     </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="peopleGrid">
-        <!-- People cards will be injected here -->
-    </div>
 </div>
 
-<!-- ============================= PAGE: REPORTS ============================= -->
-<div id="page-reports" class="page overflow-y-auto p-6 flex-col gap-4">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div class="stat-card">
-            <h3 class="font-bold text-slate-700 mb-1">SLA Global</h3>
-            <p class="text-4xl font-extrabold text-emerald-600">94%</p>
-            <p class="text-sm text-slate-500 mt-1">Tickets dentro do prazo este mês</p>
-        </div>
-        <div class="stat-card">
-            <h3 class="font-bold text-slate-700 mb-1">Ticket mais rápido</h3>
-            <p class="text-4xl font-extrabold text-brand-600">1h20</p>
-            <p class="text-sm text-slate-500 mt-1">Atestado Médico #8460</p>
-        </div>
-        <div class="stat-card">
-            <h3 class="font-bold text-slate-700 mb-1">Ticket mais lento</h3>
-            <p class="text-4xl font-extrabold text-red-500">72h</p>
-            <p class="text-sm text-slate-500 mt-1">Vaga Sênior Back-end #8410</p>
-        </div>
-    </div>
+</div><!-- /main -->
 
-    <div class="stat-card">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-slate-700">SLA por Categoria</h3>
-            <select class="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white outline-none">
-                <option>Maio 2025</option>
-                <option>Abril 2025</option>
-            </select>
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Categoria</th>
-                    <th>Meta (h)</th>
-                    <th>Média Real (h)</th>
-                    <th>Tickets</th>
-                    <th>Dentro do Prazo</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><span class="badge bg-rose-50 text-rose-600">Comunicado</span></td>
-                    <td>24h</td><td>18h</td><td>8</td>
-                    <td>100%</td>
-                    <td><span class="badge bg-emerald-50 text-emerald-600">✓ OK</span></td>
-                </tr>
-                <tr>
-                    <td><span class="badge bg-indigo-50 text-indigo-600">Recrutamento</span></td>
-                    <td>72h</td><td>58h</td><td>14</td>
-                    <td>86%</td>
-                    <td><span class="badge bg-emerald-50 text-emerald-600">✓ OK</span></td>
-                </tr>
-                <tr>
-                    <td><span class="badge bg-fuchsia-50 text-fuchsia-600">Treinamento</span></td>
-                    <td>48h</td><td>51h</td><td>7</td>
-                    <td>71%</td>
-                    <td><span class="badge bg-red-50 text-red-600">⚠ Alerta</span></td>
-                </tr>
-                <tr>
-                    <td><span class="badge bg-amber-50 text-amber-600">Depto. Pessoal</span></td>
-                    <td>48h</td><td>32h</td><td>10</td>
-                    <td>100%</td>
-                    <td><span class="badge bg-emerald-50 text-emerald-600">✓ OK</span></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div class="stat-card">
-        <h3 class="font-bold text-slate-700 mb-4">Histórico de Tickets (últimos 30 dias)</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th><th>Título</th><th>Categoria</th><th>Responsável</th><th>Criado em</th><th>SLA</th><th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="font-mono text-slate-400">#8492</td>
-                    <td class="font-medium text-slate-700">Disparo TriplaPay</td>
-                    <td><span class="badge bg-rose-50 text-rose-600">Comunicado</span></td>
-                    <td>Carla RH</td>
-                    <td>Hoje</td>
-                    <td class="sla-over font-semibold">Vence em 2h</td>
-                    <td><span class="badge bg-blue-50 text-blue-600">Triagem</span></td>
-                </tr>
-                <tr>
-                    <td class="font-mono text-slate-400">#8480</td>
-                    <td class="font-medium text-slate-700">Workshop Liderança</td>
-                    <td><span class="badge bg-fuchsia-50 text-fuchsia-600">Treinamento</span></td>
-                    <td>Carla RH</td>
-                    <td>Há 2 dias</td>
-                    <td class="sla-warn font-semibold">28h restantes</td>
-                    <td><span class="badge bg-amber-50 text-amber-600">Em Execução</span></td>
-                </tr>
-                <tr>
-                    <td class="font-mono text-slate-400">#8475</td>
-                    <td class="font-medium text-slate-700">Desligamento Analista</td>
-                    <td><span class="badge bg-amber-50 text-amber-600">Depto. Pessoal</span></td>
-                    <td>Ana DP</td>
-                    <td>Há 3 dias</td>
-                    <td class="sla-ok font-semibold">OK</td>
-                    <td><span class="badge bg-purple-50 text-purple-600">Aguardando</span></td>
-                </tr>
-                <tr>
-                    <td class="font-mono text-slate-400">#8460</td>
-                    <td class="font-medium text-slate-700">Atestado Médico 3 dias</td>
-                    <td><span class="badge bg-amber-50 text-amber-600">Depto. Pessoal</span></td>
-                    <td>Ana DP</td>
-                    <td>Ontem</td>
-                    <td class="sla-ok font-semibold">1h20 (meta: 48h)</td>
-                    <td><span class="badge bg-emerald-50 text-emerald-600">Concluído</span></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- ============================= PAGE: PREFERENCES ============================= -->
-<div id="page-preferences" class="page overflow-y-auto p-6">
-    <div class="max-w-2xl mx-auto space-y-6">
-
-        <div class="stat-card">
-            <h3 class="font-bold text-slate-700 mb-4">Configurações do Firebase</h3>
-            <p class="text-sm text-slate-500 mb-4">Configure suas credenciais do Firebase para sincronização em tempo real. Após preencher, clique em Salvar e recarregue a página.</p>
-            <div class="space-y-3">
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">API Key</label>
-                    <input id="fb-apiKey" type="text" placeholder="AIzaSy..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Auth Domain</label>
-                    <input id="fb-authDomain" type="text" placeholder="projeto.firebaseapp.com" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Project ID</label>
-                    <input id="fb-projectId" type="text" placeholder="meu-projeto-123" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Storage Bucket</label>
-                    <input id="fb-storageBucket" type="text" placeholder="projeto.appspot.com" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Messaging Sender ID</label>
-                    <input id="fb-messagingSenderId" type="text" placeholder="123456789" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">App ID</label>
-                    <input id="fb-appId" type="text" placeholder="1:123:web:abc" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                </div>
-            </div>
-            <div class="flex gap-3 mt-5">
-                <button onclick="saveFirebaseConfig()" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors">Salvar Credenciais</button>
-                <button onclick="testFirebaseConnection()" class="border border-slate-200 hover:bg-slate-50 text-slate-700 px-5 py-2 rounded-lg text-sm font-semibold transition-colors">Testar Conexão</button>
-            </div>
-            <div id="fb-status" class="mt-3 text-sm hidden"></div>
-        </div>
-
-        <div class="stat-card">
-            <h3 class="font-bold text-slate-700 mb-4">SLAs por Categoria</h3>
-            <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-slate-700">Comunicados & Clima</span>
-                    <div class="flex items-center gap-2">
-                        <input type="number" value="24" class="w-20 border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-center outline-none focus:ring-2 focus:ring-brand-200">
-                        <span class="text-xs text-slate-500">horas</span>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-slate-700">Recrutamento & Seleção</span>
-                    <div class="flex items-center gap-2">
-                        <input type="number" value="72" class="w-20 border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-center outline-none focus:ring-2 focus:ring-brand-200">
-                        <span class="text-xs text-slate-500">horas</span>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-slate-700">Treinamento & Desenvolvimento</span>
-                    <div class="flex items-center gap-2">
-                        <input type="number" value="48" class="w-20 border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-center outline-none focus:ring-2 focus:ring-brand-200">
-                        <span class="text-xs text-slate-500">horas</span>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-slate-700">Departamento Pessoal</span>
-                    <div class="flex items-center gap-2">
-                        <input type="number" value="48" class="w-20 border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-center outline-none focus:ring-2 focus:ring-brand-200">
-                        <span class="text-xs text-slate-500">horas</span>
-                    </div>
-                </div>
-            </div>
-            <button onclick="showToast('SLAs salvos com sucesso!')" class="mt-4 bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors">Salvar SLAs</button>
-        </div>
-
-        <div class="stat-card">
-            <h3 class="font-bold text-slate-700 mb-4">Notificações</h3>
-            <div class="space-y-3">
-                <label class="flex items-center justify-between cursor-pointer">
-                    <span class="text-sm text-slate-700">Notificar quando SLA estiver em risco</span>
-                    <input type="checkbox" checked class="w-4 h-4 accent-brand-600">
-                </label>
-                <label class="flex items-center justify-between cursor-pointer">
-                    <span class="text-sm text-slate-700">Notificar novo ticket criado</span>
-                    <input type="checkbox" checked class="w-4 h-4 accent-brand-600">
-                </label>
-                <label class="flex items-center justify-between cursor-pointer">
-                    <span class="text-sm text-slate-700">Notificar quando ticket for concluído</span>
-                    <input type="checkbox" class="w-4 h-4 accent-brand-600">
-                </label>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ============================= PAGE: EMPLOYEES ============================= -->
-<div id="page-employees" class="page overflow-y-auto p-6">
-    <div class="max-w-2xl mx-auto">
-        <div class="stat-card">
-            <h3 class="font-bold text-slate-700 mb-5 text-lg">Cadastro de Funcionário</h3>
-            <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Nome Completo *</label>
-                        <input id="emp-nome" type="text" placeholder="João da Silva" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">CPF *</label>
-                        <input id="emp-cpf" type="text" placeholder="000.000.000-00" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">E-mail *</label>
-                        <input id="emp-email" type="email" placeholder="joao@tripla.com.br" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Telefone</label>
-                        <input id="emp-tel" type="tel" placeholder="(11) 99999-0000" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Cargo *</label>
-                        <input id="emp-cargo" type="text" placeholder="Analista de RH Pleno" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Departamento *</label>
-                        <select id="emp-depto" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500 bg-white">
-                            <option value="">Selecione...</option>
-                            <option>Tecnologia</option>
-                            <option>Marketing</option>
-                            <option>Financeiro</option>
-                            <option>Recursos Humanos</option>
-                            <option>Comercial</option>
-                            <option>Operações</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Data de Admissão *</label>
-                        <input id="emp-admissao" type="date" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Regime de Trabalho</label>
-                        <select id="emp-regime" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500 bg-white">
-                            <option>CLT</option>
-                            <option>PJ</option>
-                            <option>Estágio</option>
-                            <option>Temporário</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Salário (R$)</label>
-                        <input id="emp-salario" type="number" placeholder="5000" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Gestor Direto</label>
-                        <input id="emp-gestor" type="text" placeholder="Nome do gestor" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                    </div>
-                </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Modalidade</label>
-                    <div class="flex gap-4 mt-1">
-                        <label class="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-                            <input type="radio" name="modalidade" value="presencial" checked class="accent-brand-600"> Presencial
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-                            <input type="radio" name="modalidade" value="hibrido" class="accent-brand-600"> Híbrido
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-                            <input type="radio" name="modalidade" value="remoto" class="accent-brand-600"> Remoto
-                        </label>
-                    </div>
-                </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Observações</label>
-                    <textarea id="emp-obs" rows="3" placeholder="Informações adicionais..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500 resize-none"></textarea>
-                </div>
-            </div>
-            <div class="flex gap-3 mt-6">
-                <button onclick="saveEmployee()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
-                    <i data-lucide="save" class="w-4 h-4"></i> Salvar Funcionário
-                </button>
-                <button onclick="clearEmployeeForm()" class="border border-slate-200 hover:bg-slate-50 text-slate-700 px-5 py-2 rounded-lg text-sm font-semibold transition-colors">Limpar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-</div><!-- end main -->
-
-<!-- ===================== NOTIFICATION PANEL ===================== -->
+<!-- ===================== NOTIF PANEL ===================== -->
 <div id="notifOverlay" class="fixed inset-0 z-40 hidden" onclick="closeNotifPanel()"></div>
-<div id="notifPanel" class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 flex flex-col border-l border-slate-200">
-    <div class="p-5 border-b border-slate-200 flex items-center justify-between">
-        <h3 class="font-bold text-slate-800">Notificações</h3>
-        <button onclick="closeNotifPanel()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+<div id="notifPanel" class="fixed top-0 right-0 h-full w-72 bg-white shadow-2xl z-50 flex flex-col border-l border-slate-200">
+    <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="font-bold text-slate-800 text-sm">Notificações</h3>
+        <button onclick="closeNotifPanel()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
     </div>
-    <div class="flex-1 overflow-y-auto p-4 space-y-3">
-        <div class="p-3 bg-red-50 border border-red-100 rounded-xl">
-            <div class="flex items-start gap-3">
-                <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0"><i data-lucide="clock" class="w-4 h-4 text-red-600"></i></div>
-                <div>
-                    <p class="text-sm font-semibold text-slate-800">SLA em Risco!</p>
-                    <p class="text-xs text-slate-600 mt-0.5">Ticket #8492 (TriplaPay) vence em 2 horas. Ação imediata necessária.</p>
-                    <p class="text-[11px] text-slate-400 mt-1">Agora mesmo</p>
-                </div>
-            </div>
-        </div>
-        <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl">
-            <div class="flex items-start gap-3">
-                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0"><i data-lucide="plus-circle" class="w-4 h-4 text-blue-600"></i></div>
-                <div>
-                    <p class="text-sm font-semibold text-slate-800">Novo Ticket Criado</p>
-                    <p class="text-xs text-slate-600 mt-0.5">Vaga Dev Front-end Sênior (#8493) foi aberta por Ana/TI.</p>
-                    <p class="text-[11px] text-slate-400 mt-1">15 min atrás</p>
-                </div>
-            </div>
-        </div>
-        <div class="p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
-            <div class="flex items-start gap-3">
-                <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i></div>
-                <div>
-                    <p class="text-sm font-semibold text-slate-800">Ticket Concluído</p>
-                    <p class="text-xs text-slate-600 mt-0.5">Atestado Médico #8460 foi finalizado por Ana DP.</p>
-                    <p class="text-[11px] text-slate-400 mt-1">Ontem, 16:30</p>
-                </div>
-            </div>
-        </div>
-        <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-            <div class="flex items-start gap-3">
-                <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0"><i data-lucide="arrow-right" class="w-4 h-4 text-slate-600"></i></div>
-                <div>
-                    <p class="text-sm font-semibold text-slate-800">Status Atualizado</p>
-                    <p class="text-xs text-slate-600 mt-0.5">Workshop Liderança movido para "Em Execução" por Carla RH.</p>
-                    <p class="text-[11px] text-slate-400 mt-1">Há 2 horas</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="p-4 border-t border-slate-200">
-        <button onclick="closeNotifPanel(); showToast('Todas as notificações marcadas como lidas.')" class="w-full text-sm text-brand-600 font-semibold hover:text-brand-700 transition-colors">Marcar todas como lidas</button>
+    <div class="flex-1 overflow-y-auto p-3 space-y-2" id="notifList">
+        <p class="text-xs text-slate-400 text-center py-4">Carregando notificações...</p>
     </div>
 </div>
 
 <!-- ===================== TICKET DETAIL MODAL ===================== -->
-<div id="ticketModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex justify-end transition-opacity duration-300 opacity-0">
-    <div id="modalContent" class="w-full max-w-xl bg-white h-full shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
-            <div class="flex items-center gap-3">
-                <span id="modalId" class="text-xs font-mono text-slate-500 bg-white px-2 py-1 rounded border border-slate-200"></span>
-                <span id="modalBadge" class="badge"></span>
-            </div>
+<div id="ticketModal" class="modal-overlay">
+    <div class="modal-panel" id="ticketModalPanel">
+        <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-slate-50 flex-shrink-0">
             <div class="flex items-center gap-2">
-                <button onclick="closeTicketModal()" class="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <span id="tModalId" class="text-xs font-mono text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200"></span>
+                <span id="tModalBadge" class="badge"></span>
             </div>
+            <button onclick="closeTicketModal()" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-lg transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-6">
-            <h2 id="modalTitle" class="text-2xl font-bold text-slate-900 mb-6"></h2>
+        <div class="flex-1 overflow-y-auto p-5">
+            <h2 id="tModalTitle" class="text-xl font-bold text-slate-900 mb-4"></h2>
 
-            <div class="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-4">
-                <div>
-                    <p class="text-xs text-slate-500 font-medium mb-1">Status Atual</p>
-                    <select id="modalStatus" onchange="changeTicketStatus(this.value)" class="text-sm font-semibold bg-transparent outline-none cursor-pointer text-slate-700">
+            <div class="mb-5 p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-3">
+                <div class="flex-1">
+                    <p class="f-label mb-1">Status</p>
+                    <select id="tModalStatus" onchange="updateTicketStatus()" class="f-input text-sm font-semibold">
                         <option value="novas">📥 Novas (Triagem)</option>
                         <option value="andamento">⚙️ Em Execução</option>
                         <option value="aguardando">⏳ Aguardando Terceiros</option>
                         <option value="concluido">✅ Concluído</option>
                     </select>
                 </div>
-                <div>
-                    <p class="text-xs text-slate-500 font-medium mb-1">Responsável G&G</p>
-                    <select class="text-sm font-semibold bg-transparent outline-none cursor-pointer text-brand-600">
-                        <option>Carla RH</option>
-                        <option>Pedro T&D</option>
-                        <option>Ana DP</option>
+                <div class="flex-1">
+                    <p class="f-label mb-1">Responsável G&G</p>
+                    <select id="tModalResponsavel" onchange="updateTicketResponsavel()" class="f-input text-sm font-semibold text-brand-700">
+                        <option value="">Não atribuído</option>
                     </select>
                 </div>
             </div>
 
-            <div id="modalBody" class="space-y-5"></div>
+            <!-- Dados do Solicitante -->
+            <div class="mb-4">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Solicitante</h4>
+                <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <div id="tModalAvatar" class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-sm flex-shrink-0"></div>
+                    <div>
+                        <p id="tModalSolicitante" class="text-sm font-semibold text-slate-900"></p>
+                        <p id="tModalEmail" class="text-xs text-slate-500"></p>
+                        <p id="tModalArea" class="text-xs text-slate-500"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dados específicos do ticket -->
+            <div id="tModalDetails" class="mb-4 space-y-0 bg-slate-50 rounded-xl border border-slate-100 divide-y divide-slate-100 px-4"></div>
+
+            <!-- Comentário -->
+            <div class="mt-4">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Comentário / Atualização</h4>
+                <textarea id="tModalComment" rows="3" placeholder="Escreva uma atualização para o solicitante..." class="f-input text-sm resize-none"></textarea>
+                <button onclick="saveComment()" class="mt-2 text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors">Salvar comentário →</button>
+            </div>
+
+            <!-- Histórico de comentários -->
+            <div class="mt-4" id="tModalCommentHistory"></div>
         </div>
 
-        <div class="p-4 border-t border-slate-200 bg-white flex gap-3 justify-end">
-            <button onclick="rejectTicket()" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Rejeitar</button>
-            <button onclick="saveTicket()" class="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition-colors flex items-center gap-2">
-                <i data-lucide="check" class="w-4 h-4"></i> Salvar
+        <div class="p-4 border-t border-slate-200 flex gap-2 justify-end flex-shrink-0">
+            <button onclick="rejectCurrentTicket()" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Rejeitar</button>
+            <button onclick="closeTicketModal()" class="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors flex items-center gap-1.5">
+                <i data-lucide="check" class="w-3.5 h-3.5"></i> Salvo automaticamente
             </button>
         </div>
     </div>
 </div>
 
 <!-- ===================== NEW TICKET MODAL ===================== -->
-<div id="newTicketModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm items-end sm:items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-            <h3 class="font-bold text-slate-800">Novo Ticket</h3>
-            <button onclick="closeNewTicketModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+<div id="newTicketModal" class="center-modal">
+    <div class="center-modal-box p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-slate-800">Novo Ticket Manual</h3>
+            <button onclick="document.getElementById('newTicketModal').classList.remove('open')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
-        <div class="flex-1 overflow-y-auto p-6 space-y-4">
-            <div>
-                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Título *</label>
-                <input id="nt-titulo" type="text" placeholder="Descreva brevemente a solicitação" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Categoria *</label>
-                    <select id="nt-tipo" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500 bg-white">
+        <div class="space-y-3">
+            <div><label class="f-label">Título *</label><input type="text" id="nt-titulo" placeholder="Descreva a solicitação" class="f-input text-sm"></div>
+            <div class="grid grid-cols-2 gap-3">
+                <div><label class="f-label">Categoria *</label>
+                    <select id="nt-tipo" class="f-input text-sm bg-white">
                         <option value="">Selecione...</option>
                         <option value="clima">Comunicado & Clima</option>
-                        <option value="rs">Recrutamento & Seleção</option>
-                        <option value="td">Treinamento & Desenvolvimento</option>
-                        <option value="dp">Departamento Pessoal</option>
+                        <option value="rs">Recrutamento</option>
+                        <option value="td">Treinamento</option>
+                        <option value="dp">Depto. Pessoal</option>
                     </select>
                 </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Prioridade</label>
-                    <select id="nt-prioridade" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500 bg-white">
-                        <option>Normal</option>
-                        <option>Alta</option>
-                        <option>Urgente</option>
-                    </select>
-                </div>
+                <div><label class="f-label">Solicitante</label><input type="text" id="nt-solicitante" placeholder="Nome / Área" class="f-input text-sm"></div>
             </div>
-            <div>
-                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Solicitante</label>
-                <input id="nt-solicitante" type="text" placeholder="Nome / Área" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-            </div>
-            <div>
-                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Descrição</label>
-                <textarea id="nt-descricao" rows="4" placeholder="Detalhes da solicitação..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500 resize-none"></textarea>
-            </div>
+            <div><label class="f-label">Descrição</label><textarea id="nt-descricao" rows="3" placeholder="Detalhes..." class="f-input text-sm resize-none"></textarea></div>
         </div>
-        <div class="p-4 border-t border-slate-200 flex gap-3 justify-end">
-            <button onclick="closeNewTicketModal()" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancelar</button>
-            <button onclick="createTicket()" class="px-5 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition-colors flex items-center gap-2">
-                <i data-lucide="plus" class="w-4 h-4"></i> Criar Ticket
-            </button>
+        <div class="flex gap-2 justify-end mt-4">
+            <button onclick="document.getElementById('newTicketModal').classList.remove('open')" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg">Cancelar</button>
+            <button onclick="createManualTicket()" class="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg flex items-center gap-1.5"><i data-lucide="plus" class="w-4 h-4"></i> Criar</button>
         </div>
     </div>
 </div>
@@ -937,128 +551,826 @@
 <!-- Toast -->
 <div id="toast" class="toast"></div>
 
-<!-- ===================== SCRIPTS ===================== -->
-<script>
-// ==================== DATA ====================
-let tickets = {
-    '8492': { id: '8492', title: 'Disparo de Lançamento: Novo Produto TriplaPay', type: 'clima', typeLabel: 'Comunicado', typeBadgeClass: 'bg-rose-50 text-rose-600', status: 'novas', solicitante: 'Marcos Klein', area: 'Marketing', email: 'marcos@tripla.com.br', descricao: 'Solicitação de disparo para toda a empresa avisando sobre o lançamento do TriplaPay. Precisa de arte. Usar as cores da nova marca.', sla: '2h restantes', slaClass: 'text-red-600' },
-    '8493': { id: '8493', title: 'Vaga: Desenvolvedor Front-end Sênior', type: 'rs', typeLabel: 'Recrutamento', typeBadgeClass: 'bg-indigo-50 text-indigo-600', status: 'novas', solicitante: 'Ana / TI', area: 'Tecnologia', email: 'ana@tripla.com.br', descricao: 'Aumento de quadro aprovado pelo gestor. Modelo remoto. Orçamento aprovado pela diretoria.', sla: '68h restantes', slaClass: 'text-emerald-600' },
-    '8495': { id: '8495', title: 'Alteração de Período de Férias', type: 'dp', typeLabel: 'Depto. Pessoal', typeBadgeClass: 'bg-amber-50 text-amber-600', status: 'novas', solicitante: 'Vera DP', area: 'RH', email: 'vera@tripla.com.br', descricao: 'Colaborador João Silva (matrícula 1042) solicitou alteração do período de férias de Novembro para Dezembro.', sla: '44h restantes', slaClass: 'text-amber-600' },
-    '8480': { id: '8480', title: 'Workshop de Liderança In-Company', type: 'td', typeLabel: 'Treinamento', typeBadgeClass: 'bg-fuchsia-50 text-fuchsia-600', status: 'andamento', solicitante: 'Carla RH', area: 'RH', email: 'carla@tripla.com.br', descricao: 'Cotação com fornecedores de treinamento para 15 líderes. Foco em comunicação não-violenta e feedback.', sla: '28h restantes', slaClass: 'text-amber-600' },
-    '8475': { id: '8475', title: 'Desligamento: Analista Financeiro', type: 'dp', typeLabel: 'Depto. Pessoal', typeBadgeClass: 'bg-amber-50 text-amber-600', status: 'aguardando', solicitante: 'RH Legal', area: 'Jurídico', email: 'legal@tripla.com.br', descricao: 'Processo de desligamento do colaborador Fábio Mendes. Aguardando retorno do médico do trabalho para o exame demissional.', sla: 'OK', slaClass: 'text-emerald-600' },
-    '8460': { id: '8460', title: 'Atestado Médico (3 dias)', type: 'dp', typeLabel: 'Depto. Pessoal', typeBadgeClass: 'bg-amber-50 text-amber-600', status: 'concluido', solicitante: 'Ana DP', area: 'RH', email: 'ana.dp@tripla.com.br', descricao: 'Colaborador apresentou atestado de 3 dias. Lançamento realizado no sistema.', sla: 'Concluído', slaClass: 'text-emerald-600' },
+<!-- ===================== FIREBASE + APP LOGIC ===================== -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
+import {
+    getAuth, onAuthStateChanged, signOut
+} from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
+import {
+    getFirestore,
+    collection, doc,
+    onSnapshot, addDoc, updateDoc, getDoc, getDocs,
+    serverTimestamp, query, orderBy, where
+} from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+
+const firebaseConfig = {
+    apiKey:            "AIzaSyDS7ObifHn2minG2TMcdUGlRyD8SP8vcAs",
+    authDomain:        "tripla-gg-portal.firebaseapp.com",
+    projectId:         "tripla-gg-portal",
+    storageBucket:     "tripla-gg-portal.firebasestorage.app",
+    messagingSenderId: "887500083882",
+    appId:             "1:887500083882:web:05af6ad257ce17fed7b6d3"
 };
 
-let employees = [
-    { nome: 'Carla RH', cargo: 'Business Partner', depto: 'Recursos Humanos', email: 'carla@tripla.com.br', regime: 'CLT', admissao: '2022-03-01', initials: 'CR', color: 'bg-brand-100 text-brand-700' },
-    { nome: 'Pedro T&D', cargo: 'Especialista T&D', depto: 'Recursos Humanos', email: 'pedro@tripla.com.br', regime: 'CLT', admissao: '2021-07-15', initials: 'PT', color: 'bg-purple-100 text-purple-700' },
-    { nome: 'Ana DP', cargo: 'Analista DP', depto: 'Departamento Pessoal', email: 'ana.dp@tripla.com.br', regime: 'CLT', admissao: '2020-01-10', initials: 'AS', color: 'bg-rose-100 text-rose-700' },
-    { nome: 'Marcos Klein', cargo: 'Gerente de Marketing', depto: 'Marketing', email: 'marcos@tripla.com.br', regime: 'CLT', admissao: '2019-05-20', initials: 'MK', color: 'bg-amber-100 text-amber-700' },
-    { nome: 'João Silva', cargo: 'Analista Financeiro', depto: 'Financeiro', email: 'joao@tripla.com.br', regime: 'CLT', admissao: '2023-02-01', initials: 'JS', color: 'bg-emerald-100 text-emerald-700' },
-    { nome: 'Vera DP', cargo: 'Coordenadora DP', depto: 'Departamento Pessoal', email: 'vera@tripla.com.br', regime: 'CLT', admissao: '2018-09-12', initials: 'VD', color: 'bg-slate-200 text-slate-700' },
-];
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
 
+// ─── State ───────────────────────────────────────────────────────────────────
+let currentUser = null;
+let currentUserData = null;
 let currentTicketId = null;
+let allTickets = {};
+let teamMembers = [];
+let slaConfig = { clima: 24, rs: 72, td: 48, dp: 48 };
+let formConfig = {};
 
-// ==================== NAVIGATION ====================
-const pageTitles = {
-    dashboard: ['Dashboard', 'Visão geral do desempenho'],
-    kanban: ['Quadro de Solicitações', 'Acompanhamento e execução de tickets G&G'],
-    directory: ['Diretório de Pessoas', 'Colaboradores cadastrados'],
-    reports: ['Relatórios e SLAs', 'Análise de desempenho e cumprimento de prazos'],
-    preferences: ['Preferências', 'Configure o sistema'],
-    employees: ['Cadastro de Funcionários', 'Adicione novos colaboradores'],
+// ─── AUTH GUARD ──────────────────────────────────────────────────────────────
+onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (!snap.exists() || snap.data().status !== 'approved') {
+        await signOut(auth);
+        window.location.href = 'login.html';
+        return;
+    }
+
+    currentUser     = user;
+    currentUserData = snap.data();
+
+    // Show UI
+    document.getElementById('authGuard').style.display = 'none';
+    document.getElementById('sidebar').style.display = 'flex';
+    document.getElementById('mainContent').style.display = 'flex';
+
+    // Sidebar identity
+    document.getElementById('sidebarAvatar').textContent = currentUserData.initials || '??';
+    document.getElementById('sidebarName').textContent   = currentUserData.nome || user.email;
+    document.getElementById('sidebarRole').textContent   = currentUserData.funcaoLabel || 'Membro G&G';
+
+    // Admin nav
+    if (currentUserData.role === 'admin') {
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+        document.getElementById('navAdminSection').style.display = 'block';
+    }
+
+    // Profile page
+    document.getElementById('prof-nome').textContent   = currentUserData.nome || '—';
+    document.getElementById('prof-email').textContent  = currentUserData.email || '—';
+    document.getElementById('prof-funcao').textContent = currentUserData.funcaoLabel || '—';
+    document.getElementById('prof-role').textContent   = currentUserData.role === 'admin' ? 'Administrador' : 'Membro';
+
+    // Populate responsavel select in ticket modal
+    await loadTeamMembers();
+    await loadSLAConfig();
+    if (currentUserData.role === 'admin') await loadFormConfig();
+
+    startTicketListener();
+    lucide.createIcons();
+});
+
+// ─── LOGOUT ──────────────────────────────────────────────────────────────────
+window.doLogout = async function() {
+    await signOut(auth);
+    window.location.href = 'login.html';
 };
 
-function showPage(pageId) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+// ─── TEAM MEMBERS ─────────────────────────────────────────────────────────────
+async function loadTeamMembers() {
+    const q = query(collection(db, 'users'), where('status','==','approved'));
+    const snap = await getDocs(q);
+    teamMembers = [];
+    snap.forEach(d => teamMembers.push({ id: d.id, ...d.data() }));
+    renderDirectory();
+    populateResponsavelSelect();
+    document.getElementById('kpi-team').textContent = teamMembers.length;
+}
 
-    const page = document.getElementById('page-' + pageId);
-    if (page) page.classList.add('active');
+function populateResponsavelSelect() {
+    const sel = document.getElementById('tModalResponsavel');
+    sel.innerHTML = '<option value="">Não atribuído</option>';
+    teamMembers.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.nome;
+        opt.textContent = m.nome + ' (' + (m.funcaoLabel || m.funcao || '') + ')';
+        sel.appendChild(opt);
+    });
+}
 
-    const nav = document.querySelector(`.nav-link[data-page="${pageId}"]`);
-    if (nav) nav.classList.add('active');
+function renderDirectory() {
+    const grid = document.getElementById('teamGrid');
+    if (!teamMembers.length) {
+        grid.innerHTML = '<p class="text-sm text-slate-400 col-span-4">Nenhum membro aprovado.</p>';
+        return;
+    }
+    grid.innerHTML = teamMembers.map(m => {
+        const roleTag = m.role === 'admin'
+            ? '<span class="badge role-admin">Admin</span>'
+            : '<span class="badge role-member">Membro</span>';
+        const admDate = m.createdAt?.toDate ? m.createdAt.toDate().toLocaleDateString('pt-BR') : '—';
+        return `
+        <div class="stat-card hover:shadow-md transition-shadow">
+            <div class="flex flex-col items-center text-center">
+                <div class="w-14 h-14 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-lg mb-3">${m.initials || '??'}</div>
+                <p class="font-bold text-slate-800 text-sm">${m.nome}</p>
+                <p class="text-xs text-slate-500 mt-0.5">${m.funcaoLabel || m.funcao || '—'}</p>
+                <div class="mt-2">${roleTag}</div>
+            </div>
+            <div class="mt-3 pt-3 border-t border-slate-100 space-y-1 text-xs text-slate-500">
+                <p>${m.email}</p>
+                <p>Desde: ${admDate}</p>
+            </div>
+        </div>`;
+    }).join('');
+}
 
-    const [title, subtitle] = pageTitles[pageId] || ['', ''];
-    document.getElementById('pageTitle').textContent = title;
-    document.getElementById('pageSubtitle').textContent = subtitle;
+// ─── SLA CONFIG ───────────────────────────────────────────────────────────────
+async function loadSLAConfig() {
+    try {
+        const snap = await getDoc(doc(db, 'config', 'sla'));
+        if (snap.exists()) {
+            slaConfig = { ...slaConfig, ...snap.data() };
+            document.getElementById('sla-clima').value = slaConfig.clima || 24;
+            document.getElementById('sla-rs').value    = slaConfig.rs    || 72;
+            document.getElementById('sla-td').value    = slaConfig.td    || 48;
+            document.getElementById('sla-dp').value    = slaConfig.dp    || 48;
+        }
+        renderSLAConfigTable();
+    } catch(e) { console.warn('SLA config load:', e.message); }
+}
 
-    if (pageId === 'directory') renderDirectory();
+window.saveSLAs = async function() {
+    slaConfig = {
+        clima: parseInt(document.getElementById('sla-clima').value) || 24,
+        rs:    parseInt(document.getElementById('sla-rs').value)    || 72,
+        td:    parseInt(document.getElementById('sla-td').value)    || 48,
+        dp:    parseInt(document.getElementById('sla-dp').value)    || 48,
+    };
+    try {
+        await updateDoc(doc(db, 'config', 'sla'), slaConfig);
+        showToast('SLAs salvos!');
+        renderSLAConfigTable();
+    } catch(e) { showToast('Erro ao salvar SLAs: ' + e.message); }
+};
+
+function renderSLAConfigTable() {
+    const cats = [
+        { key: 'clima', label: 'Comunicados & Clima' },
+        { key: 'rs',    label: 'Recrutamento & Seleção' },
+        { key: 'td',    label: 'Treinamento & Desenvolvimento' },
+        { key: 'dp',    label: 'Departamento Pessoal' },
+    ];
+    document.getElementById('slaConfigTable').innerHTML = cats.map(c =>
+        `<tr><td>${c.label}</td><td class="font-semibold">${slaConfig[c.key] || '—'}h</td><td class="text-xs text-slate-500">Ticket deve ser concluído em ${slaConfig[c.key]}h</td></tr>`
+    ).join('');
+
+    // SLA dash in dashboard
+    document.getElementById('slaDashBody').innerHTML = cats.map(c =>
+        `<tr><td><span class="badge ${catStyle(c.key).cls}">${c.label}</span></td><td class="font-semibold">${slaConfig[c.key]}h</td><td><span class="badge bg-emerald-50 text-emerald-600">Ativo</span></td></tr>`
+    ).join('');
+}
+
+// ─── FORM CONFIG (Admin) ─────────────────────────────────────────────────────
+async function loadFormConfig() {
+    try {
+        const snap = await getDoc(doc(db, 'config', 'formulario'));
+        if (snap.exists()) formConfig = snap.data();
+        else formConfig = getDefaultFormConfig();
+    } catch(e) { formConfig = getDefaultFormConfig(); }
+    renderFormConfigTags();
+}
+
+function getDefaultFormConfig() {
+    return {
+        departamentos:    ['Tecnologia', 'Marketing', 'Financeiro', 'Comercial', 'Operações', 'Segurança da Informação'],
+        motivosVaga:      ['Nova Vaga (Aumento de Quadro)', 'Substituição', 'Promoção Interna', 'Reposição'],
+        tiposTreinamento: ['Curso Externo / Certificação', 'Treinamento In-Company', 'Mentoria', 'Auxílio Educação', 'Workshop'],
+        categoriasDP:     ['Férias', 'Benefícios', 'Atestado / Licença', 'Desligamento', 'Ajuste de Ponto', 'Declaração'],
+        tiposComunicado:  ['Aviso Institucional', 'Lançamento de Produto', 'Evento Interno', 'Alerta TI', 'Outro'],
+    };
+}
+
+function renderFormConfigTags() {
+    const map = [
+        { key: 'departamentos',    tagId: 'deptoTags'  },
+        { key: 'motivosVaga',      tagId: 'motivoTags' },
+        { key: 'tiposTreinamento', tagId: 'tdTags'     },
+        { key: 'categoriasDP',     tagId: 'dpTags'     },
+        { key: 'tiposComunicado',  tagId: 'climaTags'  },
+    ];
+    map.forEach(({ key, tagId }) => {
+        const container = document.getElementById(tagId);
+        if (!container) return;
+        const items = formConfig[key] || [];
+        container.innerHTML = items.map((item, i) =>
+            `<span class="tag">${item}<button type="button" onclick="removeConfigItem('${key}','${tagId}',${i})">×</button></span>`
+        ).join('');
+    });
+}
+
+window.addConfigItem = function(key, inputId, tagId) {
+    const input = document.getElementById(inputId);
+    const val = input.value.trim();
+    if (!val) return;
+    if (!formConfig[key]) formConfig[key] = [];
+    formConfig[key].push(val);
+    input.value = '';
+    renderFormConfigTags();
+};
+
+window.removeConfigItem = function(key, tagId, index) {
+    if (formConfig[key]) {
+        formConfig[key].splice(index, 1);
+        renderFormConfigTags();
+    }
+};
+
+window.saveFormConfig = async function() {
+    try {
+        await updateDoc(doc(db, 'config', 'formulario'), formConfig);
+        showToast('Configurações do formulário salvas!');
+    } catch(e) {
+        // If doc doesn't exist yet, create it
+        const { setDoc } = await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js');
+        await setDoc(doc(db, 'config', 'formulario'), formConfig);
+        showToast('Configurações do formulário salvas!');
+    }
+};
+
+// ─── TICKETS (real-time) ──────────────────────────────────────────────────────
+function startTicketListener() {
+    const q = query(collection(db, 'tickets'), orderBy('dataCriacao', 'desc'));
+    onSnapshot(q, (snapshot) => {
+        allTickets = {};
+        snapshot.forEach(d => { allTickets[d.id] = { _docId: d.id, ...d.data() }; });
+        renderAllColumns();
+        updateDashboard();
+        updateNotifications();
+        renderReports();
+    }, err => console.error('Ticket listener:', err));
+}
+
+// ─── RENDER KANBAN ─────────────────────────────────────────────────────────────
+const CAT_META = {
+    rs:    { label: 'Recrutamento',    cls: 'bg-indigo-50 text-indigo-600'  },
+    td:    { label: 'Treinamento',     cls: 'bg-fuchsia-50 text-fuchsia-600'},
+    dp:    { label: 'Depto. Pessoal',  cls: 'bg-amber-50 text-amber-600'    },
+    clima: { label: 'Comunicado',      cls: 'bg-rose-50 text-rose-600'      },
+};
+function catStyle(cat) { return CAT_META[cat] || { label: cat, cls: 'bg-slate-100 text-slate-600' }; }
+
+function getSLALabel(ticket) {
+    if (!ticket.dataCriacao) return { label: 'Sem data', cls: '' };
+    const created = ticket.dataCriacao.toDate ? ticket.dataCriacao.toDate() : new Date(ticket.dataCriacao);
+    const slaH    = slaConfig[ticket.categoria] || 48;
+    const deadline = new Date(created.getTime() + slaH * 3600000);
+    const now     = new Date();
+    const diffH   = (deadline - now) / 3600000;
+
+    if (ticket.status === 'concluido') return { label: 'Concluído', cls: 'text-emerald-600' };
+    if (diffH < 0)    return { label: `Vencido há ${Math.abs(Math.round(diffH))}h`, cls: 'text-red-600' };
+    if (diffH < 4)    return { label: `SLA: ${Math.round(diffH)}h restantes`, cls: 'text-red-600' };
+    if (diffH < 12)   return { label: `SLA: ${Math.round(diffH)}h restantes`, cls: 'text-amber-600' };
+    return { label: `SLA: ${Math.round(diffH)}h restantes`, cls: 'text-emerald-600' };
+}
+
+function buildCardHTML(ticket) {
+    const style = catStyle(ticket.categoria);
+    const sla   = getSLALabel(ticket);
+    const created = ticket.dataCriacao?.toDate
+        ? ticket.dataCriacao.toDate().toLocaleDateString('pt-BR')
+        : '—';
+    const initials = (ticket.solicitanteNome || '??').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    const responsavel = ticket.responsavel ? `<span class="text-[10px] text-brand-600 font-semibold">${ticket.responsavel}</span>` : '';
+    const titlePreview = ticket.titulo || ticket.title || (ticket.rs_cargo || ticket.td_tema || ticket.dp_categoria || 'Sem título');
+
+    return `
+    <div class="kanban-card bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand-300 ${ticket.status==='concluido'?'opacity-70':''}"
+         draggable="true" data-type="${ticket.categoria}" data-id="${ticket._docId}"
+         onclick="openTicket('${ticket._docId}')">
+        <div class="flex justify-between items-start mb-2">
+            <span class="badge ${style.cls}">${style.label}</span>
+            <span class="text-[10px] text-slate-400 font-mono">#${ticket.ticketId || ticket._docId.slice(-4)}</span>
+        </div>
+        <h3 class="font-semibold text-slate-800 text-xs mb-1 leading-snug line-clamp-2 ${ticket.status==='concluido'?'line-through text-slate-500':''}">${titlePreview}</h3>
+        <p class="text-[11px] text-slate-400 mb-2">${ticket.solicitanteNome || '—'} · ${ticket.areaSolicitante || '—'}</p>
+        <div class="flex items-center justify-between mt-auto pt-1.5 border-t border-slate-100">
+            <div class="flex items-center gap-1.5">
+                <div class="w-5 h-5 rounded-full bg-brand-100 flex items-center justify-center text-[9px] font-bold text-brand-700">${initials}</div>
+                ${responsavel}
+            </div>
+            <span class="text-[10px] font-semibold ${sla.cls}">${sla.label}</span>
+        </div>
+    </div>`;
+}
+
+function renderAllColumns() {
+    const colIds = { novas: [], andamento: [], aguardando: [], concluido: [] };
+    Object.values(allTickets).forEach(t => {
+        const col = colIds[t.status];
+        if (col) col.push(t);
+    });
+
+    Object.keys(colIds).forEach(status => {
+        const el = document.getElementById('col-' + status);
+        if (!el) return;
+        if (!colIds[status].length) {
+            el.innerHTML = `<div class="text-xs text-slate-400 text-center py-6 px-2">Nenhum ticket aqui</div>`;
+        } else {
+            el.innerHTML = colIds[status].map(t => buildCardHTML(t)).join('');
+        }
+    });
+
+    updateColCounts();
+    initDnD();
     lucide.createIcons();
 }
 
-document.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', () => showPage(link.dataset.page));
-});
+function updateColCounts() {
+    ['novas','andamento','aguardando','concluido'].forEach(s => {
+        const el = document.getElementById('col-' + s);
+        const hdr = document.querySelector(`[data-status="${s}"] .col-count`);
+        if (el && hdr) hdr.textContent = el.querySelectorAll('.kanban-card').length;
+    });
+}
 
-// ==================== DRAG & DROP ====================
-function initDragAndDrop() {
-    const cards = document.querySelectorAll('.kanban-card');
-    const columns = document.querySelectorAll('.column-content');
-
-    cards.forEach(card => {
-        card.addEventListener('dragstart', (e) => {
+// ─── DRAG & DROP ─────────────────────────────────────────────────────────────
+function initDnD() {
+    document.querySelectorAll('.kanban-card').forEach(card => {
+        card.addEventListener('dragstart', e => {
             card.classList.add('is-dragging');
             e.dataTransfer.setData('text/plain', card.dataset.id);
         });
         card.addEventListener('dragend', () => card.classList.remove('is-dragging'));
     });
 
-    columns.forEach(col => {
-        col.addEventListener('dragover', (e) => {
+    document.querySelectorAll('.column-content').forEach(col => {
+        col.addEventListener('dragover', e => {
             e.preventDefault();
             col.closest('.kanban-column').classList.add('drag-over');
-            const after = getDragAfterElement(col, e.clientY);
+            const after = getDragAfter(col, e.clientY);
             const dragging = document.querySelector('.is-dragging');
             if (!dragging) return;
             if (!after) col.appendChild(dragging);
             else col.insertBefore(dragging, after);
         });
-
-        col.addEventListener('dragleave', (e) => {
-            if (!col.contains(e.relatedTarget)) {
-                col.closest('.kanban-column').classList.remove('drag-over');
-            }
+        col.addEventListener('dragleave', e => {
+            if (!col.contains(e.relatedTarget)) col.closest('.kanban-column').classList.remove('drag-over');
         });
-
-        col.addEventListener('drop', (e) => {
+        col.addEventListener('drop', async e => {
             col.closest('.kanban-column').classList.remove('drag-over');
-            const ticketId = e.dataTransfer.getData('text/plain');
+            const id = e.dataTransfer.getData('text/plain');
             const newStatus = col.closest('.kanban-column').dataset.status;
-            if (ticketId && newStatus) {
-                tickets[ticketId].status = newStatus;
-                updateColCounts();
-                updateFirestore(ticketId, { status: newStatus });
-                showToast(`Ticket #${ticketId} → ${statusLabel(newStatus)}`);
+            if (id && newStatus) {
+                try {
+                    await updateDoc(doc(db, 'tickets', id), { status: newStatus });
+                    showToast(`Ticket movido para "${statusLabel(newStatus)}"`);
+                } catch(err) { showToast('Erro ao mover ticket: ' + err.message); }
             }
         });
     });
 }
 
-function getDragAfterElement(container, y) {
-    const els = [...container.querySelectorAll('.kanban-card:not(.is-dragging)')];
-    return els.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
+function getDragAfter(col, y) {
+    const els = [...col.querySelectorAll('.kanban-card:not(.is-dragging)')];
+    return els.reduce((closest, el) => {
+        const box = el.getBoundingClientRect();
         const offset = y - box.top - box.height / 2;
-        return offset < 0 && offset > closest.offset ? { offset, element: child } : closest;
+        return offset < 0 && offset > closest.offset ? { offset, element: el } : closest;
     }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
 function statusLabel(s) {
-    const map = { novas: 'Novas', andamento: 'Em Execução', aguardando: 'Aguardando', concluido: 'Concluído' };
-    return map[s] || s;
+    return { novas:'Novas', andamento:'Em Execução', aguardando:'Aguardando', concluido:'Concluído' }[s] || s;
 }
 
-function updateColCounts() {
-    ['novas', 'andamento', 'aguardando', 'concluido'].forEach(col => {
-        const count = document.getElementById('col-' + col)?.querySelectorAll('.kanban-card').length;
-        const header = document.querySelector(`[data-status="${col}"] .col-count`);
-        if (header && count !== undefined) header.textContent = count;
+// ─── TICKET MODAL ─────────────────────────────────────────────────────────────
+window.openTicket = function(docId) {
+    const t = allTickets[docId];
+    if (!t) return;
+    currentTicketId = docId;
+
+    const style = catStyle(t.categoria);
+    document.getElementById('tModalId').textContent    = '#' + (t.ticketId || docId.slice(-6).toUpperCase());
+    document.getElementById('tModalBadge').textContent = style.label;
+    document.getElementById('tModalBadge').className   = 'badge ' + style.cls;
+    document.getElementById('tModalTitle').textContent = t.titulo || t.title || t.rs_cargo || t.td_tema || 'Ticket';
+    document.getElementById('tModalStatus').value      = t.status || 'novas';
+    document.getElementById('tModalResponsavel').value = t.responsavel || '';
+
+    // Solicitante
+    const initials = (t.solicitanteNome || '??').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    document.getElementById('tModalAvatar').textContent     = initials;
+    document.getElementById('tModalSolicitante').textContent = t.solicitanteNome || '—';
+    document.getElementById('tModalEmail').textContent       = t.solicitanteEmail || '—';
+    document.getElementById('tModalArea').textContent        = t.areaSolicitante ? 'Área: ' + t.areaSolicitante : '';
+
+    // Details specific to category
+    const detailsEl = document.getElementById('tModalDetails');
+    detailsEl.innerHTML = buildTicketDetails(t);
+
+    // Comments
+    renderCommentHistory(t);
+
+    document.getElementById('ticketModal').classList.add('open');
+    lucide.createIcons();
+};
+
+function buildTicketDetails(t) {
+    const rows = [];
+    const add = (k, v) => { if (v) rows.push(`<div class="detail-row"><span class="dk">${k}</span><span class="dv">${v}</span></div>`); };
+
+    const created = t.dataCriacao?.toDate
+        ? t.dataCriacao.toDate().toLocaleString('pt-BR')
+        : '—';
+    add('Criado em', created);
+
+    if (t.categoria === 'rs') {
+        add('Motivo da Vaga', t.motivoVaga);
+        add('Cargo / Posição', t.rs_cargo || t.titulo);
+        add('Modalidade', t.modalidade);
+        add('Faixa Salarial', t.salario);
+        add('Descrição / Requisitos', t.descricao);
+    } else if (t.categoria === 'td') {
+        add('Tipo de Treinamento', t.tipoTreinamento);
+        add('Tema', t.td_tema || t.titulo);
+        add('Nº Participantes', t.participantes);
+        add('Orçamento', t.orcamento);
+        add('Justificativa', t.descricao);
+    } else if (t.categoria === 'dp') {
+        add('Categoria DP', t.dp_categoria || t.titulo);
+        add('Colaborador', t.colaborador);
+        add('Detalhes', t.descricao);
+    } else if (t.categoria === 'clima') {
+        add('Tipo', t.clima_tipo || t.titulo);
+        add('Tom de Voz', t.tom);
+        add('Canais', Array.isArray(t.canais) ? t.canais.join(', ') : t.canais);
+        add('Público-alvo', t.publicoAlvo);
+        add('Data Sugerida', t.dataDisparo);
+        add('Precisa de Arte?', t.needsDesign ? '✓ Sim — acionar Design (+48h SLA)' : 'Não');
+        add('Briefing', t.descricao);
+    } else {
+        add('Descrição', t.descricao);
+    }
+
+    const sla = getSLALabel(t);
+    add('SLA', `<span class="${sla.cls}">${sla.label}</span>`);
+
+    return rows.join('');
+}
+
+function renderCommentHistory(t) {
+    const comments = t.comentarios || [];
+    const el = document.getElementById('tModalCommentHistory');
+    if (!comments.length) { el.innerHTML = ''; return; }
+    el.innerHTML = `
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 mt-2">Histórico</h4>
+        <div class="space-y-2">
+            ${comments.map(c => `
+                <div class="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                    <p class="text-xs text-slate-700 font-semibold">${c.autor || '—'}</p>
+                    <p class="text-xs text-slate-600 mt-0.5">${c.texto}</p>
+                    <p class="text-[10px] text-slate-400 mt-1">${c.data || ''}</p>
+                </div>`).join('')}
+        </div>`;
+}
+
+window.updateTicketStatus = async function() {
+    if (!currentTicketId) return;
+    const newStatus = document.getElementById('tModalStatus').value;
+    try {
+        await updateDoc(doc(db, 'tickets', currentTicketId), { status: newStatus });
+        showToast('Status atualizado!');
+    } catch(e) { showToast('Erro: ' + e.message); }
+};
+
+window.updateTicketResponsavel = async function() {
+    if (!currentTicketId) return;
+    const resp = document.getElementById('tModalResponsavel').value;
+    try {
+        await updateDoc(doc(db, 'tickets', currentTicketId), { responsavel: resp });
+        showToast('Responsável atribuído!');
+    } catch(e) { showToast('Erro: ' + e.message); }
+};
+
+window.saveComment = async function() {
+    if (!currentTicketId) return;
+    const text = document.getElementById('tModalComment').value.trim();
+    if (!text) return;
+
+    const t = allTickets[currentTicketId];
+    const comments = t.comentarios || [];
+    comments.push({
+        autor: currentUserData?.nome || 'G&G',
+        texto: text,
+        data: new Date().toLocaleString('pt-BR'),
     });
+
+    try {
+        await updateDoc(doc(db, 'tickets', currentTicketId), { comentarios: comments });
+        document.getElementById('tModalComment').value = '';
+        showToast('Comentário salvo!');
+    } catch(e) { showToast('Erro: ' + e.message); }
+};
+
+window.rejectCurrentTicket = async function() {
+    if (!currentTicketId) return;
+    if (!confirm('Rejeitar esta solicitação?')) return;
+    try {
+        await updateDoc(doc(db, 'tickets', currentTicketId), { status: 'rejeitado' });
+        showToast('Solicitação rejeitada.');
+        closeTicketModal();
+    } catch(e) { showToast('Erro: ' + e.message); }
+};
+
+window.closeTicketModal = function() {
+    document.getElementById('ticketModal').classList.remove('open');
+    currentTicketId = null;
+};
+
+document.getElementById('ticketModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('ticketModal')) closeTicketModal();
+});
+
+// ─── CREATE MANUAL TICKET ────────────────────────────────────────────────────
+window.createManualTicket = async function() {
+    const titulo = document.getElementById('nt-titulo').value.trim();
+    const tipo   = document.getElementById('nt-tipo').value;
+    if (!titulo || !tipo) { showToast('Preencha Título e Categoria!'); return; }
+
+    const ticketId = String(8500 + Math.floor(Math.random() * 499));
+    const ticketData = {
+        titulo,
+        categoria: tipo,
+        solicitanteNome:  currentUserData?.nome || 'G&G',
+        solicitanteEmail: currentUser?.email || '',
+        areaSolicitante:  'Criado manualmente',
+        status:           'novas',
+        dataCriacao:      serverTimestamp(),
+        ticketId,
+        descricao: document.getElementById('nt-descricao').value.trim(),
+        responsavel: document.getElementById('nt-solicitante').value.trim() || '',
+    };
+
+    try {
+        await addDoc(collection(db, 'tickets'), ticketData);
+        showToast(`Ticket #${ticketId} criado!`);
+        document.getElementById('newTicketModal').classList.remove('open');
+        ['nt-titulo','nt-tipo','nt-solicitante','nt-descricao'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+    } catch(e) { showToast('Erro: ' + e.message); }
+};
+
+// ─── DASHBOARD ───────────────────────────────────────────────────────────────
+function updateDashboard() {
+    const list = Object.values(allTickets);
+    const open = list.filter(t => t.status === 'novas').length;
+    const wip  = list.filter(t => t.status === 'andamento').length;
+    const done = list.filter(t => t.status === 'concluido').length;
+    const risk = list.filter(t => {
+        if (t.status === 'concluido') return false;
+        if (!t.dataCriacao) return false;
+        const created = t.dataCriacao.toDate ? t.dataCriacao.toDate() : new Date();
+        const slaH = slaConfig[t.categoria] || 48;
+        const diffH = (new Date(created.getTime() + slaH * 3600000) - new Date()) / 3600000;
+        return diffH < 4;
+    }).length;
+
+    document.getElementById('kpi-open').textContent = open;
+    document.getElementById('kpi-wip').textContent  = wip;
+    document.getElementById('kpi-done').textContent = done;
+    document.getElementById('kpi-sla-risk').textContent = risk ? `${risk} com SLA crítico` : 'Todos dentro do prazo';
+    document.getElementById('kpi-sla-risk').className = risk ? 'text-xs text-red-600 mt-1' : 'text-xs text-emerald-600 mt-1';
+
+    // Category breakdown
+    const cats = { rs: 0, td: 0, dp: 0, clima: 0 };
+    list.forEach(t => { if (cats[t.categoria] !== undefined) cats[t.categoria]++; });
+    const total = list.length || 1;
+    document.getElementById('catBreakdown').innerHTML = Object.entries(cats).map(([k, v]) => {
+        const style = catStyle(k);
+        return `<div>
+            <div class="flex justify-between text-xs mb-1"><span class="text-slate-600">${style.label}</span><span class="font-semibold">${v}</span></div>
+            <div class="progress-bar"><div class="progress-fill bg-brand-500" style="width:${Math.round(v/total*100)}%"></div></div>
+        </div>`;
+    }).join('');
+
+    // Recent activity
+    const recent = list.slice(0, 5);
+    document.getElementById('recentActivity').innerHTML = recent.length
+        ? recent.map(t => {
+            const style = catStyle(t.categoria);
+            const date = t.dataCriacao?.toDate ? t.dataCriacao.toDate().toLocaleDateString('pt-BR') : '—';
+            return `<div class="flex items-center gap-3 py-1.5 border-b border-slate-100 last:border-0">
+                <span class="w-2 h-2 rounded-full bg-brand-500 flex-shrink-0"></span>
+                <span class="flex-1 text-sm text-slate-700 truncate">${t.titulo || t.rs_cargo || t.td_tema || 'Ticket'}</span>
+                <span class="badge ${style.cls} flex-shrink-0">${style.label}</span>
+                <span class="text-xs text-slate-400 flex-shrink-0">${date}</span>
+            </div>`;
+        }).join('')
+        : '<p class="text-sm text-slate-400">Nenhuma atividade ainda.</p>';
 }
 
-// ==================== FILTER ====================
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+function updateNotifications() {
+    const list = Object.values(allTickets);
+    const critical = list.filter(t => {
+        if (t.status === 'concluido') return false;
+        if (!t.dataCriacao) return false;
+        const created = t.dataCriacao.toDate ? t.dataCriacao.toDate() : new Date();
+        const diffH = (new Date(created.getTime() + (slaConfig[t.categoria]||48) * 3600000) - new Date()) / 3600000;
+        return diffH < 4 && diffH > -24;
+    });
+
+    const badge = document.getElementById('notifBadge');
+    badge.classList.toggle('hidden', critical.length === 0);
+
+    const newTickets = list.filter(t => t.status === 'novas').slice(0, 3);
+    document.getElementById('notifList').innerHTML = [
+        ...critical.map(t => `
+            <div class="p-3 bg-red-50 border border-red-100 rounded-xl">
+                <p class="text-xs font-bold text-red-700">⚠️ SLA Crítico</p>
+                <p class="text-xs text-slate-600 mt-0.5">${t.titulo || t.rs_cargo || 'Ticket'} — vence em breve</p>
+            </div>`),
+        ...newTickets.map(t => `
+            <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                <p class="text-xs font-bold text-blue-700">📥 Novo Ticket</p>
+                <p class="text-xs text-slate-600 mt-0.5">${t.titulo || t.rs_cargo || 'Ticket'}</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">${t.solicitanteNome || '—'}</p>
+            </div>`)
+    ].join('') || '<p class="text-xs text-slate-400 text-center py-4">Nenhuma notificação pendente.</p>';
+}
+
+// ─── REPORTS ──────────────────────────────────────────────────────────────────
+function renderReports() {
+    const list = Object.values(allTickets);
+    const done = list.filter(t => t.status === 'concluido').length;
+    const open = list.filter(t => t.status !== 'concluido').length;
+
+    document.getElementById('rep-done').textContent = done;
+    document.getElementById('rep-open').textContent = open;
+    document.getElementById('rep-sla').textContent  = list.length
+        ? Math.round(done / list.length * 100) + '%'
+        : '—%';
+
+    document.getElementById('allTicketsTable').innerHTML = list.map(t => {
+        const style = catStyle(t.categoria);
+        const date  = t.dataCriacao?.toDate ? t.dataCriacao.toDate().toLocaleDateString('pt-BR') : '—';
+        const statusMap = { novas:'Triagem', andamento:'Em Execução', aguardando:'Aguardando', concluido:'Concluído', rejeitado:'Rejeitado' };
+        return `<tr>
+            <td class="font-mono text-slate-400 text-xs">#${t.ticketId || t._docId?.slice(-4)}</td>
+            <td class="font-medium text-slate-700 max-w-xs truncate">${t.titulo || t.rs_cargo || t.td_tema || '—'}</td>
+            <td><span class="badge ${style.cls}">${style.label}</span></td>
+            <td>${t.solicitanteNome || '—'}</td>
+            <td>${t.responsavel || '<span class="text-slate-400">—</span>'}</td>
+            <td>${date}</td>
+            <td><span class="badge bg-slate-100 text-slate-600">${statusMap[t.status] || t.status}</span></td>
+        </tr>`;
+    }).join('') || '<tr><td colspan="7" class="text-center text-slate-400 py-6">Nenhum ticket ainda.</td></tr>';
+}
+
+// ─── ADMIN: USERS ─────────────────────────────────────────────────────────────
+window.loadAdminUsers = async function() {
+    const snap = await getDocs(collection(db, 'users'));
+    const tbody = document.getElementById('usersAdminTable');
+    const rows = [];
+
+    snap.forEach(d => {
+        const u = d.data();
+        const statusBadge = {
+            pending:  '<span class="badge role-pending">Pendente</span>',
+            approved: '<span class="badge role-approved">Aprovado</span>',
+            rejected: '<span class="badge bg-slate-100 text-slate-500">Rejeitado</span>',
+        }[u.status] || '<span class="badge bg-slate-100 text-slate-500">' + u.status + '</span>';
+
+        const roleBadge = u.role === 'admin'
+            ? '<span class="badge role-admin">Admin</span>'
+            : '<span class="badge role-member">Membro</span>';
+
+        const actions = [];
+        if (u.status === 'pending') {
+            actions.push(`<button onclick="approveUser('${d.id}')" class="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-2 py-1 rounded-lg font-semibold transition-colors">Aprovar</button>`);
+            actions.push(`<button onclick="rejectUser('${d.id}')" class="text-xs bg-red-50 text-red-700 hover:bg-red-100 px-2 py-1 rounded-lg font-semibold transition-colors">Rejeitar</button>`);
+        }
+        if (u.status === 'approved' && u.role !== 'admin') {
+            actions.push(`<button onclick="makeAdmin('${d.id}')" class="text-xs bg-amber-50 text-amber-700 hover:bg-amber-100 px-2 py-1 rounded-lg font-semibold transition-colors">→ Admin</button>`);
+        }
+        if (u.status === 'approved' && u.role === 'admin' && d.id !== currentUser?.uid) {
+            actions.push(`<button onclick="removeAdmin('${d.id}')" class="text-xs bg-slate-50 text-slate-600 hover:bg-slate-100 px-2 py-1 rounded-lg font-semibold transition-colors">→ Membro</button>`);
+        }
+        if (u.status === 'approved') {
+            actions.push(`<button onclick="revokeUser('${d.id}')" class="text-xs bg-red-50 text-red-700 hover:bg-red-100 px-2 py-1 rounded-lg font-semibold transition-colors">Revogar</button>`);
+        }
+
+        rows.push(`<tr>
+            <td class="font-medium text-slate-800">${u.nome || '—'}</td>
+            <td class="text-slate-500">${u.email || '—'}</td>
+            <td>${u.funcaoLabel || u.funcao || '—'}</td>
+            <td>${roleBadge}</td>
+            <td>${statusBadge}</td>
+            <td><div class="flex gap-1 flex-wrap">${actions.join('')}</div></td>
+        </tr>`);
+    });
+
+    tbody.innerHTML = rows.join('');
+};
+
+window.approveUser = async function(uid) {
+    await updateDoc(doc(db, 'users', uid), { status: 'approved' });
+    showToast('Usuário aprovado!');
+    loadAdminUsers();
+    loadTeamMembers();
+};
+window.rejectUser = async function(uid) {
+    await updateDoc(doc(db, 'users', uid), { status: 'rejected' });
+    showToast('Usuário rejeitado.');
+    loadAdminUsers();
+};
+window.makeAdmin = async function(uid) {
+    await updateDoc(doc(db, 'users', uid), { role: 'admin' });
+    showToast('Usuário promovido a Admin!');
+    loadAdminUsers();
+};
+window.removeAdmin = async function(uid) {
+    await updateDoc(doc(db, 'users', uid), { role: 'member' });
+    showToast('Permissão admin removida.');
+    loadAdminUsers();
+};
+window.revokeUser = async function(uid) {
+    if (!confirm('Revogar o acesso deste usuário?')) return;
+    await updateDoc(doc(db, 'users', uid), { status: 'rejected' });
+    showToast('Acesso revogado.');
+    loadAdminUsers();
+    loadTeamMembers();
+};
+
+// ─── NAVIGATION ──────────────────────────────────────────────────────────────
+const PAGE_META = {
+    dashboard:   ['Dashboard', 'Visão geral em tempo real'],
+    kanban:      ['Quadro de Solicitações', 'Acompanhamento em tempo real'],
+    directory:   ['Equipe G&G', 'Membros com acesso ao painel'],
+    reports:     ['Relatórios & SLAs', 'Análise de desempenho'],
+    admin:       ['Painel Admin', 'Gerenciamento do sistema'],
+    preferences: ['Preferências', 'Configurações do seu perfil'],
+};
+
+window.showPage = function(pageId) {
+    if (pageId === 'admin' && currentUserData?.role !== 'admin') {
+        showToast('Acesso restrito a administradores.');
+        return;
+    }
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+    const page = document.getElementById('page-' + pageId);
+    if (page) page.classList.add('active');
+    const nav = document.querySelector(`.nav-link[data-page="${pageId}"]`);
+    if (nav) nav.classList.add('active');
+    const [title, sub] = PAGE_META[pageId] || ['', ''];
+    document.getElementById('pageTitle').textContent   = title;
+    document.getElementById('pageSubtitle').textContent = sub;
+
+    if (pageId === 'admin') { loadAdminUsers(); loadFormConfig(); }
+    if (pageId === 'directory') renderDirectory();
+    if (pageId === 'reports') renderReports();
+    lucide.createIcons();
+};
+
+document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => window.showPage(link.dataset.page));
+});
+
+// ─── NOTIFICATIONS PANEL ─────────────────────────────────────────────────────
+document.getElementById('notifBtn').addEventListener('click', () => {
+    document.getElementById('notifPanel').classList.add('open');
+    document.getElementById('notifOverlay').classList.remove('hidden');
+    document.getElementById('notifBadge').classList.add('hidden');
+});
+window.closeNotifPanel = function() {
+    document.getElementById('notifPanel').classList.remove('open');
+    document.getElementById('notifOverlay').classList.add('hidden');
+};
+
+// ─── NEW TICKET BUTTON ────────────────────────────────────────────────────────
+document.getElementById('newTicketBtn').addEventListener('click', () => {
+    document.getElementById('newTicketModal').classList.add('open');
+    lucide.createIcons();
+});
+
+// ─── GLOBAL SEARCH ────────────────────────────────────────────────────────────
+document.getElementById('globalSearch').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase();
+    document.querySelectorAll('.kanban-card').forEach(card => {
+        card.style.display = (!q || card.textContent.toLowerCase().includes(q)) ? '' : 'none';
+    });
+});
+
+// ─── FILTER BUTTONS ───────────────────────────────────────────────────────────
 document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -1070,362 +1382,30 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     });
 });
 
-// ==================== TICKET MODAL ====================
-function openTicketModal(id) {
-    const ticket = tickets[id];
-    if (!ticket) return;
-    currentTicketId = id;
-
-    document.getElementById('modalId').textContent = '#TRP-' + id;
-    document.getElementById('modalBadge').textContent = ticket.typeLabel;
-    document.getElementById('modalBadge').className = 'badge ' + ticket.typeBadgeClass;
-    document.getElementById('modalTitle').textContent = ticket.title;
-    document.getElementById('modalStatus').value = ticket.status;
-
-    document.getElementById('modalBody').innerHTML = `
-        <div>
-            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Dados do Solicitante</h4>
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-sm">
-                    ${ticket.solicitante.split(' ').slice(0,2).map(w=>w[0]).join('')}
-                </div>
-                <div>
-                    <p class="text-sm font-semibold text-slate-900">${ticket.solicitante}</p>
-                    <p class="text-xs text-slate-500">${ticket.area} / ${ticket.email}</p>
-                </div>
-            </div>
-        </div>
-        <div class="border-t border-slate-100"></div>
-        <div>
-            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Descrição</h4>
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-700 leading-relaxed">${ticket.descricao}</div>
-        </div>
-        <div>
-            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">SLA</h4>
-            <p class="text-sm font-semibold ${ticket.slaClass}">${ticket.sla}</p>
-        </div>
-        <div class="border-t border-slate-100"></div>
-        <div>
-            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Adicionar Comentário</h4>
-            <textarea rows="3" placeholder="Escreva uma atualização..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 resize-none"></textarea>
-            <button onclick="showToast('Comentário salvo!')" class="mt-2 text-xs font-semibold text-brand-600 hover:text-brand-700">Enviar comentário</button>
-        </div>
-    `;
-
-    const modal = document.getElementById('ticketModal');
-    modal.classList.remove('hidden');
-    setTimeout(() => {
-        modal.classList.remove('opacity-0');
-        document.getElementById('modalContent').classList.remove('translate-x-full');
-    }, 10);
-    lucide.createIcons();
-}
-
-function closeTicketModal() {
-    const modal = document.getElementById('ticketModal');
-    modal.classList.add('opacity-0');
-    document.getElementById('modalContent').classList.add('translate-x-full');
-    setTimeout(() => { modal.classList.add('hidden'); currentTicketId = null; }, 300);
-}
-
-function changeTicketStatus(newStatus) {
-    if (!currentTicketId) return;
-    tickets[currentTicketId].status = newStatus;
-    updateFirestore(currentTicketId, { status: newStatus });
-    showToast(`Status atualizado: ${statusLabel(newStatus)}`);
-}
-
-function saveTicket() { showToast('Ticket salvo com sucesso!'); closeTicketModal(); }
-function rejectTicket() { showToast('Solicitação rejeitada.'); closeTicketModal(); }
-
-document.getElementById('ticketModal').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('ticketModal')) closeTicketModal();
-});
-
-// ==================== NEW TICKET MODAL ====================
-document.getElementById('newTicketBtn').addEventListener('click', () => {
-    document.getElementById('newTicketModal').classList.add('open');
-    lucide.createIcons();
-});
-
-function closeNewTicketModal() {
-    document.getElementById('newTicketModal').classList.remove('open');
-}
-
-function createTicket() {
-    const titulo = document.getElementById('nt-titulo').value.trim();
-    const tipo = document.getElementById('nt-tipo').value;
-    if (!titulo || !tipo) { showToast('Preencha Título e Categoria!'); return; }
-
-    const id = String(8500 + Math.floor(Math.random() * 100));
-    const typeMap = {
-        clima: { label: 'Comunicado', cls: 'bg-rose-50 text-rose-600' },
-        rs: { label: 'Recrutamento', cls: 'bg-indigo-50 text-indigo-600' },
-        td: { label: 'Treinamento', cls: 'bg-fuchsia-50 text-fuchsia-600' },
-        dp: { label: 'Depto. Pessoal', cls: 'bg-amber-50 text-amber-600' },
-    };
-    const t = typeMap[tipo];
-    const solicitante = document.getElementById('nt-solicitante').value || 'Não informado';
-    const descricao = document.getElementById('nt-descricao').value || '';
-
-    tickets[id] = { id, title: titulo, type: tipo, typeLabel: t.label, typeBadgeClass: t.cls, status: 'novas', solicitante, area: '-', email: '-', descricao, sla: 'Novo', slaClass: 'text-slate-500' };
-
-    const col = document.getElementById('col-novas');
-    const cardHTML = `
-        <div class="kanban-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand-300 border-l-4 border-l-brand-400" draggable="true" data-type="${tipo}" data-id="${id}" onclick="openTicketModal('${id}')">
-            <div class="flex justify-between items-start mb-2">
-                <span class="badge ${t.cls}">${t.label}</span>
-                <span class="text-xs text-slate-400 font-mono">#${id}</span>
-            </div>
-            <h3 class="font-semibold text-slate-800 text-sm mb-1 leading-snug">${titulo}</h3>
-            <p class="text-xs text-slate-500 mb-3 line-clamp-2">${descricao || '—'}</p>
-            <div class="flex items-center justify-between">
-                <span class="text-xs text-slate-500">Agora</span>
-                <span class="badge bg-brand-50 text-brand-600">Novo</span>
-            </div>
-        </div>`;
-    col.insertAdjacentHTML('afterbegin', cardHTML);
-    updateColCounts();
-    initDragAndDrop();
-
-    saveToFirestore('tickets', id, tickets[id]);
-    showToast(`Ticket #${id} criado com sucesso!`);
-    closeNewTicketModal();
-
-    // Reset form
-    ['nt-titulo','nt-tipo','nt-prioridade','nt-solicitante','nt-descricao'].forEach(f => {
-        const el = document.getElementById(f);
-        if (el) el.value = '';
+// ─── ADMIN TABS ───────────────────────────────────────────────────────────────
+window.switchAdminTab = function(tab) {
+    document.querySelectorAll('.admin-tab-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.adminTab === tab);
+        b.classList.toggle('text-brand-600', b.dataset.adminTab === tab);
+        b.classList.toggle('border-brand-600', b.dataset.adminTab === tab);
+        b.classList.toggle('text-slate-500', b.dataset.adminTab !== tab);
+        b.classList.toggle('border-transparent', b.dataset.adminTab !== tab);
     });
-    lucide.createIcons();
-}
-
-// ==================== NOTIFICATION PANEL ====================
-document.getElementById('notifBtn').addEventListener('click', () => {
-    document.getElementById('notifPanel').classList.add('open');
-    document.getElementById('notifOverlay').classList.remove('hidden');
-    document.getElementById('notifBadge').style.display = 'none';
-    lucide.createIcons();
-});
-
-function closeNotifPanel() {
-    document.getElementById('notifPanel').classList.remove('open');
-    document.getElementById('notifOverlay').classList.add('hidden');
-}
-
-// ==================== DIRECTORY ====================
-const deptColors = {
-    'Recursos Humanos': 'bg-brand-100 text-brand-700',
-    'Departamento Pessoal': 'bg-amber-100 text-amber-700',
-    'Tecnologia': 'bg-blue-100 text-blue-700',
-    'Marketing': 'bg-fuchsia-100 text-fuchsia-700',
-    'Financeiro': 'bg-emerald-100 text-emerald-700',
-    'Jurídico': 'bg-slate-200 text-slate-700',
-    'Comercial': 'bg-orange-100 text-orange-700',
-    'Operações': 'bg-purple-100 text-purple-700',
+    document.getElementById('admin-tab-users').classList.toggle('flex', tab === 'users');
+    document.getElementById('admin-tab-users').classList.toggle('hidden', tab !== 'users');
+    document.getElementById('admin-tab-form').classList.toggle('flex', tab === 'form');
+    document.getElementById('admin-tab-form').classList.toggle('hidden', tab !== 'form');
 };
 
-function renderDirectory() {
-    const grid = document.getElementById('peopleGrid');
-    if (!grid) return;
-    grid.innerHTML = employees.map(emp => {
-        const initials = emp.initials || emp.nome.split(' ').slice(0,2).map(w=>w[0]).join('');
-        const colorClass = emp.color || deptColors[emp.depto] || 'bg-slate-200 text-slate-700';
-        const admDate = emp.admissao ? new Date(emp.admissao).toLocaleDateString('pt-BR') : '-';
-        return `
-        <div class="stat-card hover:shadow-md transition-shadow cursor-pointer group">
-            <div class="flex flex-col items-center text-center">
-                <div class="w-14 h-14 rounded-full ${colorClass} flex items-center justify-center font-bold text-lg mb-3">${initials}</div>
-                <p class="font-bold text-slate-800 text-sm">${emp.nome}</p>
-                <p class="text-xs text-slate-500 mt-0.5">${emp.cargo}</p>
-                <span class="mt-2 text-[11px] font-semibold px-2 py-0.5 rounded-full ${colorClass}">${emp.depto}</span>
-            </div>
-            <div class="mt-4 pt-4 border-t border-slate-100 space-y-1">
-                <p class="text-xs text-slate-500 flex items-center gap-1"><span class="font-medium text-slate-700">Email:</span> ${emp.email}</p>
-                <p class="text-xs text-slate-500 flex items-center gap-1"><span class="font-medium text-slate-700">Regime:</span> ${emp.regime}</p>
-                <p class="text-xs text-slate-500 flex items-center gap-1"><span class="font-medium text-slate-700">Admissão:</span> ${admDate}</p>
-            </div>
-        </div>`;
-    }).join('');
-}
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+window.showToast = function(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+};
 
-// ==================== EMPLOYEES ====================
-function saveEmployee() {
-    const nome = document.getElementById('emp-nome').value.trim();
-    const cargo = document.getElementById('emp-cargo').value.trim();
-    const depto = document.getElementById('emp-depto').value;
-    const email = document.getElementById('emp-email').value.trim();
-    const cpf = document.getElementById('emp-cpf').value.trim();
-    const regime = document.getElementById('emp-regime').value;
-    const admissao = document.getElementById('emp-admissao').value;
-
-    if (!nome || !cargo || !depto || !email) {
-        showToast('Preencha todos os campos obrigatórios (*)!');
-        return;
-    }
-
-    const initials = nome.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
-    const colorClass = deptColors[depto] || 'bg-slate-200 text-slate-700';
-
-    const emp = { nome, cargo, depto, email, cpf, regime, admissao, initials, color: colorClass };
-    employees.push(emp);
-
-    saveToFirestore('employees', nome.replace(/\s/g,'_'), emp);
-    showToast(`Funcionário "${nome}" cadastrado com sucesso!`);
-    clearEmployeeForm();
-}
-
-function clearEmployeeForm() {
-    ['emp-nome','emp-cpf','emp-email','emp-tel','emp-cargo','emp-salario','emp-gestor','emp-obs'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-    });
-    document.getElementById('emp-depto').value = '';
-    document.getElementById('emp-regime').value = 'CLT';
-    document.getElementById('emp-admissao').value = '';
-}
-
-// ==================== FIREBASE ====================
-let db = null;
-
-function loadFirebaseConfig() {
-    try {
-        const cfg = JSON.parse(localStorage.getItem('triplaFirebaseConfig') || 'null');
-        if (cfg) {
-            document.getElementById('fb-apiKey').value = cfg.apiKey || '';
-            document.getElementById('fb-authDomain').value = cfg.authDomain || '';
-            document.getElementById('fb-projectId').value = cfg.projectId || '';
-            document.getElementById('fb-storageBucket').value = cfg.storageBucket || '';
-            document.getElementById('fb-messagingSenderId').value = cfg.messagingSenderId || '';
-            document.getElementById('fb-appId').value = cfg.appId || '';
-        }
-    } catch(e) {}
-}
-
-function saveFirebaseConfig() {
-    const cfg = {
-        apiKey: document.getElementById('fb-apiKey').value.trim(),
-        authDomain: document.getElementById('fb-authDomain').value.trim(),
-        projectId: document.getElementById('fb-projectId').value.trim(),
-        storageBucket: document.getElementById('fb-storageBucket').value.trim(),
-        messagingSenderId: document.getElementById('fb-messagingSenderId').value.trim(),
-        appId: document.getElementById('fb-appId').value.trim(),
-    };
-
-    if (!cfg.apiKey || !cfg.projectId) {
-        showFirebaseStatus('Preencha ao menos a API Key e o Project ID.', false);
-        return;
-    }
-
-    localStorage.setItem('triplaFirebaseConfig', JSON.stringify(cfg));
-    showToast('Credenciais salvas! Recarregue a página para conectar.');
-    showFirebaseStatus('Credenciais salvas com sucesso!', true);
-}
-
-async function testFirebaseConnection() {
-    const projectId = document.getElementById('fb-projectId').value.trim();
-    if (!projectId) {
-        showFirebaseStatus('Informe o Project ID para testar.', false);
-        return;
-    }
-    showFirebaseStatus('Testando conexão...', null);
-    try {
-        const res = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`, { method: 'GET' });
-        if (res.ok || res.status === 403) {
-            showFirebaseStatus('Projeto encontrado! Configure as regras de segurança no Console Firebase.', true);
-        } else {
-            showFirebaseStatus(`Projeto não encontrado ou credenciais inválidas (HTTP ${res.status}).`, false);
-        }
-    } catch(e) {
-        showFirebaseStatus('Erro de rede. Verifique o Project ID.', false);
-    }
-}
-
-function showFirebaseStatus(msg, ok) {
-    const el = document.getElementById('fb-status');
-    el.classList.remove('hidden');
-    el.className = `mt-3 text-sm px-3 py-2 rounded-lg font-medium ${ok === true ? 'bg-emerald-50 text-emerald-700' : ok === false ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'}`;
-    el.textContent = msg;
-}
-
-async function initFirebase() {
-    try {
-        const cfg = JSON.parse(localStorage.getItem('triplaFirebaseConfig') || 'null');
-        if (!cfg || !cfg.apiKey) return;
-
-        const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js');
-        const { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc } = await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js');
-
-        const app = getApps().length === 0 ? initializeApp(cfg) : getApps()[0];
-        db = getFirestore(app);
-
-        // Listen for real-time ticket updates
-        onSnapshot(collection(db, 'tickets'), (snapshot) => {
-            snapshot.docChanges().forEach(change => {
-                const data = change.doc.data();
-                const id = change.doc.id;
-                if (change.type === 'added' || change.type === 'modified') {
-                    if (!tickets[id]) {
-                        // New ticket from another session — add to board
-                        tickets[id] = data;
-                    }
-                }
-            });
-        }, (err) => console.warn('Firebase listener error:', err));
-
-        document.querySelector('.firebase-live').textContent = 'Firebase conectado ✓';
-    } catch(e) {
-        console.warn('Firebase não configurado. Usando modo offline.', e.message);
-        document.querySelector('.firebase-live').textContent = 'Modo offline';
-        document.querySelector('.firebase-live').style.color = '#94a3b8';
-    }
-}
-
-async function saveToFirestore(collectionName, docId, data) {
-    if (!db) return;
-    try {
-        const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js');
-        await setDoc(doc(db, collectionName, docId), data);
-    } catch(e) {
-        console.warn('Firestore save failed:', e.message);
-    }
-}
-
-async function updateFirestore(ticketId, data) {
-    if (!db) return;
-    try {
-        const { doc, updateDoc } = await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js');
-        await updateDoc(doc(db, 'tickets', ticketId), data);
-    } catch(e) {
-        console.warn('Firestore update failed:', e.message);
-    }
-}
-
-// ==================== TOAST ====================
-function showToast(msg) {
-    const toast = document.getElementById('toast');
-    toast.textContent = msg;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3000);
-}
-
-// ==================== GLOBAL SEARCH ====================
-document.getElementById('globalSearch').addEventListener('input', (e) => {
-    const q = e.target.value.toLowerCase();
-    document.querySelectorAll('.kanban-card').forEach(card => {
-        const text = card.textContent.toLowerCase();
-        card.style.display = (!q || text.includes(q)) ? '' : 'none';
-    });
-});
-
-// ==================== INIT ====================
-document.addEventListener('DOMContentLoaded', () => {
-    lucide.createIcons();
-    initDragAndDrop();
-    updateColCounts();
-    loadFirebaseConfig();
-    initFirebase();
-});
+lucide.createIcons();
 </script>
 </body>
 </html>

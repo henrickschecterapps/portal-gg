@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | G&G Tripla</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --brand: #1a56db;
+            --brand-dark: #1441a8;
+            --brand-light: #e0edff;
+            --ink: #0d275e;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --surface: #ffffff;
+            --bg: #f1f5f9;
+            --error: #ef4444;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* LEFT PANEL */
+        .left-panel {
+            width: 52%;
+            background: var(--ink);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 48px;
+            overflow: hidden;
+        }
+
+        @media (max-width: 768px) { .left-panel { display: none; } }
+
+        .left-panel::before {
+            content: '';
+            position: absolute;
+            top: -120px; right: -120px;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(26,86,219,0.35) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .left-panel::after {
+            content: '';
+            position: absolute;
+            bottom: -80px; left: -80px;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(117,168,255,0.2) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .left-logo { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
+        .left-logo svg { flex-shrink: 0; }
+        .left-logo-text { display: flex; flex-direction: column; }
+        .left-logo-text .brand { font-size: 22px; font-weight: 700; color: white; letter-spacing: -0.5px; }
+        .left-logo-text .sub { font-size: 11px; color: #a3c7ff; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; }
+
+        .left-content { position: relative; z-index: 1; }
+        .left-content h2 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 44px;
+            color: white;
+            line-height: 1.15;
+            margin-bottom: 20px;
+        }
+        .left-content h2 em { color: #75a8ff; font-style: italic; }
+        .left-content p { color: #a3c7ff; font-size: 15px; line-height: 1.7; max-width: 340px; }
+
+        .left-stats { position: relative; z-index: 1; display: flex; gap: 32px; }
+        .stat { display: flex; flex-direction: column; gap: 4px; }
+        .stat-num { font-size: 28px; font-weight: 700; color: white; letter-spacing: -1px; }
+        .stat-label { font-size: 12px; color: #75a8ff; font-weight: 500; }
+
+        /* Decorative grid lines */
+        .grid-lines {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        /* RIGHT PANEL */
+        .right-panel {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+            background: var(--surface);
+        }
+
+        .auth-box {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-box h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 30px;
+            color: var(--ink);
+            margin-bottom: 8px;
+        }
+        .auth-box .subtitle {
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 36px;
+            line-height: 1.6;
+        }
+
+        /* Tabs */
+        .tab-bar {
+            display: flex;
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 28px;
+        }
+        .tab {
+            flex: 1;
+            padding: 9px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            border-radius: 9px;
+            transition: all 0.2s;
+        }
+        .tab.active {
+            background: white;
+            color: var(--brand);
+            box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+        }
+
+        /* Forms */
+        .form-panel { display: none; }
+        .form-panel.active { display: block; animation: fadeUp 0.3s ease; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .field { margin-bottom: 16px; }
+        .field label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        .field input, .field select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'DM Sans', sans-serif;
+            color: var(--ink);
+            background: white;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            appearance: none;
+        }
+        .field input:focus, .field select:focus {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+        }
+        .field input.error { border-color: var(--error); }
+
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .field-hint {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+        .field-error-msg {
+            font-size: 11px;
+            color: var(--error);
+            margin-top: 4px;
+            display: none;
+        }
+        .field-error-msg.show { display: block; }
+
+        .btn-primary {
+            width: 100%;
+            padding: 13px;
+            background: var(--brand);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(26,86,219,0.3);
+        }
+        .btn-primary:hover { background: var(--brand-dark); box-shadow: 0 6px 20px rgba(26,86,219,0.4); }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0;
+            color: var(--muted);
+            font-size: 12px;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* Alert */
+        .alert {
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            display: none;
+            align-items: flex-start;
+            gap: 10px;
+            line-height: 1.5;
+        }
+        .alert.show { display: flex; }
+        .alert.error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+        .alert.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .alert.info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+
+        .pending-notice {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 12px;
+            color: #92400e;
+            line-height: 1.6;
+            display: none;
+        }
+        .pending-notice.show { display: block; }
+
+        /* Password toggle */
+        .pwd-wrap { position: relative; }
+        .pwd-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--muted);
+            padding: 4px;
+            display: flex;
+            align-items: center;
+        }
+        .pwd-toggle svg { width: 16px; height: 16px; }
+
+        .terms {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 16px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        /* Spinner */
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner {
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        /* Mobile logo */
+        .mobile-logo {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+        @media (max-width: 768px) {
+            .mobile-logo { display: flex; }
+            .right-panel { padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- LEFT PANEL -->
+<div class="left-panel">
+    <div class="grid-lines"></div>
+
+    <div class="left-logo">
+        <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="#1a56db"/>
+            <path d="M12 28L20 12L28 28H23L20 22L17 28H12Z" fill="white"/>
+            <path d="M20 22L23 28H28L20 12V22Z" fill="#75a8ff"/>
+        </svg>
+        <div class="left-logo-text">
+            <span class="brand">tripla</span>
+            <span class="sub">Gente & Gestão</span>
+        </div>
+    </div>
+
+    <div class="left-content">
+        <h2>Gestão de<br>pessoas com <em>precisão</em></h2>
+        <p>Acompanhe solicitações, monitore SLAs e mantenha seu time alinhado — tudo em um único painel.</p>
+    </div>
+
+    <div class="left-stats">
+        <div class="stat">
+            <span class="stat-num">94%</span>
+            <span class="stat-label">SLA cumprido</span>
+        </div>
+        <div class="stat">
+            <span class="stat-num">18h</span>
+            <span class="stat-label">Tempo médio</span>
+        </div>
+        <div class="stat">
+            <span class="stat-num">38</span>
+            <span class="stat-label">Tickets/mês</span>
+        </div>
+    </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="right-panel">
+    <div class="auth-box">
+
+        <div class="mobile-logo">
+            <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
+                <rect width="40" height="40" rx="8" fill="#1a56db"/>
+                <path d="M12 28L20 12L28 28H23L20 22L17 28H12Z" fill="white"/>
+                <path d="M20 22L23 28H28L20 12V22Z" fill="#75a8ff"/>
+            </svg>
+            <span style="font-weight:700;font-size:18px;color:#0d275e">tripla G&G</span>
+        </div>
+
+        <h1>Acesso ao Painel</h1>
+        <p class="subtitle">Exclusivo para o time de Gente & Gestão.</p>
+
+        <div class="tab-bar">
+            <div class="tab active" id="tab-login" onclick="switchTab('login')">Entrar</div>
+            <div class="tab" id="tab-register" onclick="switchTab('register')">Solicitar Acesso</div>
+        </div>
+
+        <!-- ALERT -->
+        <div class="alert" id="mainAlert">
+            <span id="alertIcon">⚠️</span>
+            <span id="alertMsg"></span>
+        </div>
+
+        <!-- ===== LOGIN FORM ===== -->
+        <div class="form-panel active" id="panel-login">
+            <div class="field">
+                <label>E-mail</label>
+                <input type="email" id="login-email" placeholder="seu@tripla.com.br" autocomplete="email">
+                <p class="field-error-msg" id="err-login-email">E-mail inválido.</p>
+            </div>
+            <div class="field">
+                <label>Senha</label>
+                <div class="pwd-wrap">
+                    <input type="password" id="login-senha" placeholder="••••••••" autocomplete="current-password">
+                    <button type="button" class="pwd-toggle" onclick="togglePwd('login-senha', this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><circle cx="12" cy="12" r="3" /></svg>
+                    </button>
+                </div>
+                <p class="field-error-msg" id="err-login-senha">Senha obrigatória.</p>
+            </div>
+
+            <button class="btn-primary" id="btnLogin" onclick="doLogin()">
+                <span>Entrar no Painel</span>
+            </button>
+
+            <div class="terms">Ao entrar, você concorda com as políticas internas de uso da plataforma Tripla.</div>
+        </div>
+
+        <!-- ===== REGISTER FORM ===== -->
+        <div class="form-panel" id="panel-register">
+            <div class="pending-notice" id="pendingNotice">
+                ✅ Solicitação enviada! Um administrador irá revisar e aprovar seu acesso em breve.
+            </div>
+
+            <div id="registerFormFields">
+                <div class="field-row">
+                    <div class="field">
+                        <label>Nome</label>
+                        <input type="text" id="reg-nome" placeholder="Seu nome">
+                        <p class="field-error-msg" id="err-reg-nome">Campo obrigatório.</p>
+                    </div>
+                    <div class="field">
+                        <label>Sobrenome</label>
+                        <input type="text" id="reg-sobrenome" placeholder="Sobrenome">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>E-mail Corporativo</label>
+                    <input type="email" id="reg-email" placeholder="seu@tripla.com.br">
+                    <p class="field-error-msg" id="err-reg-email">E-mail inválido.</p>
+                </div>
+                <div class="field">
+                    <label>Função no time G&G</label>
+                    <select id="reg-funcao">
+                        <option value="" disabled selected>Selecione sua função...</option>
+                        <option value="business_partner">Business Partner</option>
+                        <option value="recrutamento">Recrutamento & Seleção</option>
+                        <option value="td">Treinamento & Desenvolvimento</option>
+                        <option value="dp">Departamento Pessoal</option>
+                        <option value="endomarketing">Endomarketing / Comunicação</option>
+                        <option value="analista_rh">Analista de RH</option>
+                        <option value="coordenador">Coordenador(a) G&G</option>
+                        <option value="gerente">Gerente de Pessoas</option>
+                    </select>
+                    <p class="field-error-msg" id="err-reg-funcao">Selecione uma função.</p>
+                </div>
+                <div class="field">
+                    <label>Senha</label>
+                    <div class="pwd-wrap">
+                        <input type="password" id="reg-senha" placeholder="Mínimo 8 caracteres">
+                        <button type="button" class="pwd-toggle" onclick="togglePwd('reg-senha', this)">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><circle cx="12" cy="12" r="3" /></svg>
+                        </button>
+                    </div>
+                    <p class="field-hint">Mínimo 8 caracteres.</p>
+                    <p class="field-error-msg" id="err-reg-senha">Mínimo 8 caracteres.</p>
+                </div>
+                <div class="field">
+                    <label>Confirmar Senha</label>
+                    <div class="pwd-wrap">
+                        <input type="password" id="reg-senha2" placeholder="Repita a senha">
+                        <button type="button" class="pwd-toggle" onclick="togglePwd('reg-senha2', this)">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><circle cx="12" cy="12" r="3" /></svg>
+                        </button>
+                    </div>
+                    <p class="field-error-msg" id="err-reg-senha2">As senhas não coincidem.</p>
+                </div>
+
+                <button class="btn-primary" id="btnRegister" onclick="doRegister()">
+                    <span>Solicitar Acesso</span>
+                </button>
+
+                <div class="terms">Seu acesso será avaliado por um administrador G&G antes de ser liberado.</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ===== FIREBASE + LOGIC ===== -->
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
+    import {
+        getAuth,
+        signInWithEmailAndPassword,
+        createUserWithEmailAndPassword,
+        onAuthStateChanged
+    } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
+    import {
+        getFirestore,
+        doc,
+        setDoc,
+        getDoc,
+        serverTimestamp
+    } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+        apiKey:            "AIzaSyDS7ObifHn2minG2TMcdUGlRyD8SP8vcAs",
+        authDomain:        "tripla-gg-portal.firebaseapp.com",
+        projectId:         "tripla-gg-portal",
+        storageBucket:     "tripla-gg-portal.firebasestorage.app",
+        messagingSenderId: "887500083882",
+        appId:             "1:887500083882:web:05af6ad257ce17fed7b6d3"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Se já estiver logado e aprovado, redireciona direto
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const snap = await getDoc(doc(db, 'users', user.uid));
+            if (snap.exists() && snap.data().status === 'approved') {
+                window.location.href = 'kanban.html';
+            }
+        }
+    });
+
+    // Funções globais
+    window.doLogin = async function() {
+        const email = document.getElementById('login-email').value.trim();
+        const senha = document.getElementById('login-senha').value;
+        let valid = true;
+
+        if (!email || !/\S+@\S+\.\S+/.test(email)) {
+            document.getElementById('err-login-email').classList.add('show'); valid = false;
+        } else { document.getElementById('err-login-email').classList.remove('show'); }
+        if (!senha) {
+            document.getElementById('err-login-senha').classList.add('show'); valid = false;
+        } else { document.getElementById('err-login-senha').classList.remove('show'); }
+        if (!valid) return;
+
+        setLoading('btnLogin', true);
+        hideAlert();
+
+        try {
+            const cred = await signInWithEmailAndPassword(auth, email, senha);
+            const snap = await getDoc(doc(db, 'users', cred.user.uid));
+
+            if (!snap.exists()) {
+                showAlert('error', 'Usuário não encontrado. Solicite acesso primeiro.');
+                await auth.signOut();
+                return;
+            }
+
+            const userData = snap.data();
+
+            if (userData.status === 'pending') {
+                showAlert('info', 'Seu acesso ainda está pendente de aprovação por um administrador.');
+                await auth.signOut();
+                return;
+            }
+            if (userData.status === 'rejected') {
+                showAlert('error', 'Seu acesso foi recusado. Entre em contato com a equipe G&G.');
+                await auth.signOut();
+                return;
+            }
+
+            // Atualiza último login
+            await setDoc(doc(db, 'users', cred.user.uid), { lastLogin: serverTimestamp() }, { merge: true });
+            window.location.href = 'kanban.html';
+
+        } catch (err) {
+            const msgs = {
+                'auth/user-not-found': 'Nenhuma conta encontrada com este e-mail.',
+                'auth/wrong-password': 'Senha incorreta. Tente novamente.',
+                'auth/invalid-credential': 'E-mail ou senha inválidos.',
+                'auth/too-many-requests': 'Muitas tentativas. Tente novamente em alguns minutos.',
+            };
+            showAlert('error', msgs[err.code] || 'Erro ao entrar: ' + err.message);
+        } finally {
+            setLoading('btnLogin', false);
+        }
+    };
+
+    window.doRegister = async function() {
+        const nome = document.getElementById('reg-nome').value.trim();
+        const sobrenome = document.getElementById('reg-sobrenome').value.trim();
+        const email = document.getElementById('reg-email').value.trim();
+        const funcao = document.getElementById('reg-funcao').value;
+        const senha = document.getElementById('reg-senha').value;
+        const senha2 = document.getElementById('reg-senha2').value;
+        let valid = true;
+
+        if (!nome) { document.getElementById('err-reg-nome').classList.add('show'); valid = false; }
+        else { document.getElementById('err-reg-nome').classList.remove('show'); }
+        if (!email || !/\S+@\S+\.\S+/.test(email)) { document.getElementById('err-reg-email').classList.add('show'); valid = false; }
+        else { document.getElementById('err-reg-email').classList.remove('show'); }
+        if (!funcao) { document.getElementById('err-reg-funcao').classList.add('show'); valid = false; }
+        else { document.getElementById('err-reg-funcao').classList.remove('show'); }
+        if (senha.length < 8) { document.getElementById('err-reg-senha').classList.add('show'); valid = false; }
+        else { document.getElementById('err-reg-senha').classList.remove('show'); }
+        if (senha !== senha2) { document.getElementById('err-reg-senha2').classList.add('show'); valid = false; }
+        else { document.getElementById('err-reg-senha2').classList.remove('show'); }
+        if (!valid) return;
+
+        setLoading('btnRegister', true);
+        hideAlert();
+
+        const funcaoLabels = {
+            business_partner: 'Business Partner', recrutamento: 'Recrutamento & Seleção',
+            td: 'Treinamento & Desenvolvimento', dp: 'Departamento Pessoal',
+            endomarketing: 'Endomarketing / Comunicação', analista_rh: 'Analista de RH',
+            coordenador: 'Coordenador(a) G&G', gerente: 'Gerente de Pessoas'
+        };
+
+        try {
+            const cred = await createUserWithEmailAndPassword(auth, email, senha);
+
+            // Salva perfil do usuário no Firestore — status: 'pending'
+            await setDoc(doc(db, 'users', cred.user.uid), {
+                uid: cred.user.uid,
+                nome: nome + (sobrenome ? ' ' + sobrenome : ''),
+                email: email,
+                funcao: funcao,
+                funcaoLabel: funcaoLabels[funcao] || funcao,
+                status: 'pending',     // admin precisa aprovar
+                role: 'member',        // 'member' | 'admin'
+                initials: (nome[0] + (sobrenome ? sobrenome[0] : nome[1] || '')).toUpperCase(),
+                createdAt: serverTimestamp(),
+                lastLogin: null,
+            });
+
+            // Desloga imediatamente — acesso só após aprovação
+            await auth.signOut();
+
+            document.getElementById('registerFormFields').style.display = 'none';
+            document.getElementById('pendingNotice').classList.add('show');
+
+        } catch (err) {
+            const msgs = {
+                'auth/email-already-in-use': 'Este e-mail já está cadastrado. Tente fazer login.',
+                'auth/invalid-email': 'E-mail inválido.',
+                'auth/weak-password': 'Senha muito fraca. Use ao menos 8 caracteres.',
+            };
+            showAlert('error', msgs[err.code] || 'Erro ao registrar: ' + err.message);
+        } finally {
+            setLoading('btnRegister', false);
+        }
+    };
+
+    // Helpers
+    function setLoading(btnId, loading) {
+        const btn = document.getElementById(btnId);
+        if (loading) {
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Aguarde...';
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = btnId === 'btnLogin'
+                ? '<span>Entrar no Painel</span>'
+                : '<span>Solicitar Acesso</span>';
+        }
+    }
+
+    function showAlert(type, msg) {
+        const el = document.getElementById('mainAlert');
+        el.className = 'alert show ' + type;
+        document.getElementById('alertMsg').textContent = msg;
+        const icons = { error: '❌', success: '✅', info: 'ℹ️' };
+        document.getElementById('alertIcon').textContent = icons[type] || 'ℹ️';
+    }
+
+    function hideAlert() {
+        document.getElementById('mainAlert').classList.remove('show');
+    }
+</script>
+
+<script>
+    function switchTab(tab) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        document.getElementById('panel-' + tab).classList.add('active');
+        document.getElementById('mainAlert').classList.remove('show');
+    }
+
+    function togglePwd(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        btn.innerHTML = isHidden
+            ? `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>`
+            : `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><circle cx="12" cy="12" r="3" /></svg>`;
+    }
+
+    // Enter key support
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            if (document.getElementById('panel-login').classList.contains('active')) window.doLogin?.();
+            else window.doRegister?.();
+        }
+    });
+</script>
+</body>
+</html>

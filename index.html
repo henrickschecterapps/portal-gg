@@ -4,153 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hub de Gente & Gestão | Tripla</title>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    fontFamily: { sans: ['DM Sans', 'sans-serif'] },
                     colors: {
                         brand: {
-                            50: '#f0f6ff', 100: '#e0edff', 200: '#cce0ff',
-                            300: '#a3c7ff', 400: '#75a8ff', 500: '#4783ff',
-                            600: '#1a56db', 700: '#1441a8', 800: '#103380',
-                            900: '#0d275e', 950: '#08173b',
-                        },
-                        surface: '#ffffff',
-                        background: '#f8fafc',
-                    },
-                    animation: {
-                        'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-                        'fade-in': 'fadeIn 0.3s ease-out forwards',
-                    },
-                    keyframes: {
-                        slideUp: {
-                            '0%': { opacity: '0', transform: 'translateY(20px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        },
-                        fadeIn: {
-                            '0%': { opacity: '0' },
-                            '100%': { opacity: '1' },
+                            50:'#f0f6ff',100:'#e0edff',200:'#cce0ff',
+                            300:'#a3c7ff',400:'#75a8ff',500:'#4783ff',
+                            600:'#1a56db',700:'#1441a8',800:'#103380',
+                            900:'#0d275e',950:'#08173b'
                         }
                     }
                 }
             }
         }
     </script>
-
     <style>
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #93c5fd; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #60a5fa; }
+        ::-webkit-scrollbar{width:6px}
+        ::-webkit-scrollbar-thumb{background:#93c5fd;border-radius:10px}
 
-        .bg-grid-pattern {
-            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-            background-size: 24px 24px;
-        }
+        .bg-grid{background-image:radial-gradient(#cbd5e1 1px,transparent 1px);background-size:24px 24px}
 
-        /* Floating Label */
-        .floating-label {
-            position: absolute;
-            top: 50%;
-            left: 1rem;
-            transform: translateY(-50%);
-            color: #94a3b8;
-            font-size: 0.875rem;
-            transition: all 0.2s ease;
-            pointer-events: none;
-            background: transparent;
-            padding: 0 4px;
-        }
-        .floating-input:focus ~ .floating-label,
-        .floating-input:not(:placeholder-shown) ~ .floating-label {
-            top: 0;
-            transform: translateY(-50%) scale(0.82);
-            color: #1a56db;
-            background-color: white;
-        }
-        /* For slate-50 bg inputs */
-        .floating-input-gray:focus ~ .floating-label-gray,
-        .floating-input-gray:not(:placeholder-shown) ~ .floating-label-gray {
-            top: 0;
-            transform: translateY(-50%) scale(0.82);
-            color: #1a56db;
-            background-color: #f8fafc;
-        }
+        .floating-label{position:absolute;top:50%;left:1rem;transform:translateY(-50%);color:#94a3b8;font-size:.875rem;transition:all .2s;pointer-events:none;background:transparent;padding:0 4px}
+        .floating-input:focus~.floating-label,
+        .floating-input:not(:placeholder-shown)~.floating-label{top:0;transform:translateY(-50%) scale(.82);color:#1a56db;background-color:white}
 
-        .drag-active {
-            border-color: #1a56db !important;
-            background-color: #f0f6ff !important;
-        }
+        .drag-active{border-color:#1a56db!important;background-color:#f0f6ff!important}
+        .dynamic-section{display:none}
+        .dynamic-section.active{display:block;animation:slideUp .4s cubic-bezier(.16,1,.3,1) forwards}
+        @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+        input[type="file"]{display:none}
 
-        .dynamic-section { display: none; }
-        .dynamic-section.active {
-            display: block;
-            animation: slideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
+        .error-msg{color:#ef4444;font-size:11px;margin-top:4px;display:none}
+        .error-msg.show{display:block}
+        .field-error{border-color:#ef4444!important}
 
-        input[type="file"] { display: none; }
+        #toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:white;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none}
+        #toast.show{transform:translateY(0);opacity:1}
 
-        /* Field error state */
-        .field-error { border-color: #ef4444 !important; }
-        .error-msg { color: #ef4444; font-size: 11px; margin-top: 4px; display: none; }
-        .error-msg.show { display: block; }
-
-        /* Spinner */
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .animate-spin { animation: spin 0.8s linear infinite; }
-
-        /* Toast */
-        #toast {
-            position: fixed; bottom: 24px; right: 24px;
-            background: #1e293b; color: white;
-            padding: 12px 18px; border-radius: 10px;
-            font-size: 13px; font-weight: 500; z-index: 9999;
-            transform: translateY(80px); opacity: 0;
-            transition: all 0.3s ease; pointer-events: none;
-        }
-        #toast.show { transform: translateY(0); opacity: 1; }
-
-        /* Firebase status dot */
-        .fb-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        .fb-dot.green { background: #10b981; animation: fbpulse 1.5s infinite; }
-        .fb-dot.yellow { background: #f59e0b; }
-        .fb-dot.red { background: #ef4444; }
-        @keyframes fbpulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        .fb-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
+        .fb-dot.green{background:#10b981;animation:fbp 1.5s infinite}
+        .fb-dot.yellow{background:#f59e0b}
+        .fb-dot.red{background:#ef4444}
+        @keyframes fbp{0%,100%{opacity:1}50%{opacity:.4}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .animate-spin{animation:spin .8s linear infinite}
     </style>
 </head>
-<body class="bg-background text-slate-800 font-sans antialiased min-h-screen flex flex-col relative overflow-x-hidden">
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col relative overflow-x-hidden">
 
-<!-- Background -->
-<div class="fixed inset-0 bg-grid-pattern opacity-40 z-0 pointer-events-none"></div>
+<div class="fixed inset-0 bg-grid opacity-40 z-0 pointer-events-none"></div>
 <div class="fixed top-0 left-0 w-full h-96 bg-gradient-to-b from-brand-50 to-transparent z-0 pointer-events-none"></div>
 
-<!-- ===================== HEADER ===================== -->
-<header class="relative pt-12 pb-24 px-4 sm:px-6 lg:px-8 z-10 border-b border-brand-100 bg-white/60 backdrop-blur-xl shadow-sm">
+<!-- HEADER -->
+<header class="relative pt-10 pb-20 px-4 sm:px-6 lg:px-8 z-10 border-b border-brand-100 bg-white/60 backdrop-blur-xl shadow-sm">
     <div class="max-w-6xl mx-auto">
-
-        <div class="mb-10 flex items-center justify-between">
+        <div class="mb-8 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                    <rect width="40" height="40" rx="8" fill="#1a56db"/>
-                    <path d="M12 28L20 12L28 28H23L20 22L17 28H12Z" fill="white"/>
-                    <path d="M20 22L23 28H28L20 12V22Z" fill="#75a8ff"/>
-                </svg>
+                <svg width="38" height="38" viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="8" fill="#1a56db"/><path d="M12 28L20 12L28 28H23L20 22L17 28H12Z" fill="white"/><path d="M20 22L23 28H28L20 12V22Z" fill="#75a8ff"/></svg>
                 <span class="text-2xl font-extrabold tracking-tight text-slate-900">tripla</span>
             </div>
-
-            <div class="hidden md:flex items-center gap-4 bg-white/80 p-2.5 pr-4 rounded-full shadow-sm border border-brand-100">
-                <div class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 border border-brand-200">
-                    <i data-lucide="user" class="w-5 h-5"></i>
+            <div class="hidden md:flex items-center gap-4 bg-white/80 p-2 pr-4 rounded-full shadow-sm border border-brand-100">
+                <div class="w-9 h-9 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 border border-brand-200">
+                    <i data-lucide="user" class="w-4 h-4"></i>
                 </div>
                 <div>
                     <p class="text-sm font-semibold text-slate-800 leading-tight">Colaborador</p>
-                    <p class="text-[11px] text-slate-500 flex items-center gap-1">
+                    <p class="text-[11px] text-slate-500 flex items-center">
                         <span id="fbDot" class="fb-dot yellow"></span>
                         <span id="fbStatus">Conectando...</span>
                     </p>
@@ -159,67 +84,49 @@
         </div>
 
         <div class="max-w-3xl">
-            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-100 text-brand-700 text-sm font-semibold mb-4 border border-brand-200">
-                <i data-lucide="layers" class="w-4 h-4"></i>
-                Portal de Serviços G&G
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-100 text-brand-700 text-sm font-semibold mb-3 border border-brand-200">
+                <i data-lucide="layers" class="w-4 h-4"></i> Portal de Serviços G&G
             </div>
-            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 mb-4 leading-tight">
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 mb-3 leading-tight">
                 Hub de <span class="text-brand-600">Gente & Gestão</span>
             </h1>
-            <p class="text-lg text-slate-600 font-light leading-relaxed max-w-2xl">
-                Centralize suas requisições. Selecione a área de atendimento abaixo e forneça os detalhes para que nosso time possa atuar com precisão e agilidade.
+            <p class="text-base text-slate-600 font-light leading-relaxed max-w-2xl">
+                Centralize suas requisições. Selecione a área de atendimento e forneça os detalhes para que nosso time possa atuar com precisão e agilidade.
             </p>
         </div>
     </div>
 </header>
 
-<!-- ===================== MAIN ===================== -->
-<main class="flex-grow flex items-start justify-center p-4 sm:p-6 lg:p-8 -mt-16 z-20">
+<!-- MAIN -->
+<main class="flex-grow flex items-start justify-center p-4 sm:p-6 lg:p-8 -mt-14 z-20">
     <div class="w-full max-w-6xl">
-
-        <form id="ggForm" novalidate class="space-y-8">
+        <form id="ggForm" novalidate class="space-y-7">
 
             <!-- STEP 1: Seus Dados -->
-            <div class="bg-white rounded-3xl shadow-md shadow-brand-900/5 border border-slate-200 p-8">
-                <h3 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600 font-bold">1</div>
+            <div class="bg-white rounded-3xl shadow-md border border-slate-200 p-7">
+                <h3 class="text-base font-bold text-slate-900 mb-5 flex items-center gap-3">
+                    <div class="w-7 h-7 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600 font-bold text-sm">1</div>
                     Seus Dados
                 </h3>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Nome -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <div>
                         <div class="relative">
-                            <input type="text" id="nome" placeholder=" "
-                                class="floating-input block w-full px-4 py-3.5 text-slate-900 bg-white border-2 border-slate-200 rounded-xl appearance-none focus:outline-none focus:border-brand-500 transition-colors">
+                            <input type="text" id="nome" placeholder=" " class="floating-input block w-full px-4 py-3.5 text-slate-900 bg-white border-2 border-slate-200 rounded-xl appearance-none focus:outline-none focus:border-brand-500 transition-colors">
                             <label for="nome" class="floating-label">Nome Completo *</label>
                         </div>
                         <p class="error-msg" id="err-nome">Campo obrigatório.</p>
                     </div>
-
-                    <!-- Email -->
                     <div>
                         <div class="relative">
-                            <input type="email" id="email" placeholder=" "
-                                class="floating-input block w-full px-4 py-3.5 text-slate-900 bg-white border-2 border-slate-200 rounded-xl appearance-none focus:outline-none focus:border-brand-500 transition-colors">
+                            <input type="email" id="email" placeholder=" " class="floating-input block w-full px-4 py-3.5 text-slate-900 bg-white border-2 border-slate-200 rounded-xl appearance-none focus:outline-none focus:border-brand-500 transition-colors">
                             <label for="email" class="floating-label">E-mail Corporativo *</label>
                         </div>
-                        <p class="error-msg" id="err-email">Informe um e-mail válido.</p>
+                        <p class="error-msg" id="err-email">E-mail inválido.</p>
                     </div>
-
-                    <!-- Área -->
                     <div>
                         <div class="relative">
                             <select id="area" class="block w-full px-4 py-3.5 text-slate-900 bg-white border-2 border-slate-200 rounded-xl appearance-none focus:outline-none focus:border-brand-500 transition-colors">
                                 <option value="" disabled selected>Selecione seu Departamento *</option>
-                                <option value="tecnologia">Tecnologia / Engenharia</option>
-                                <option value="seguranca">Segurança da Informação</option>
-                                <option value="vendas">Vendas / Comercial</option>
-                                <option value="marketing">Marketing</option>
-                                <option value="financeiro">Administrativo / Financeiro</option>
-                                <option value="operacoes">Operações</option>
-                                <option value="rh">Recursos Humanos</option>
-                                <option value="juridico">Jurídico</option>
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
                                 <i data-lucide="chevron-down" class="w-4 h-4"></i>
@@ -230,304 +137,233 @@
                 </div>
             </div>
 
-            <!-- STEP 2: Seleção de Serviço -->
+            <!-- STEP 2: Área -->
             <div class="bg-transparent">
-                <h3 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3 px-2">
-                    <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-brand-600 shadow-sm border border-slate-200 font-bold">2</div>
+                <h3 class="text-base font-bold text-slate-900 mb-5 flex items-center gap-3 px-2">
+                    <div class="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-brand-600 shadow-sm border border-slate-200 font-bold text-sm">2</div>
                     Qual área você precisa acionar? *
                 </h3>
-                <p class="error-msg px-2 mb-4" id="err-categoria">Selecione uma categoria.</p>
+                <p class="error-msg px-2 mb-3" id="err-categoria">Selecione uma categoria.</p>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-
-                    <!-- R&S -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <label class="cursor-pointer relative group">
                         <input type="radio" name="categoria_gg" value="rs" class="peer sr-only" onchange="toggleFormSections(this.value)">
-                        <div class="h-full p-6 rounded-3xl border-2 border-slate-200 bg-white hover:shadow-lg hover:border-slate-300 peer-checked:border-brand-600 peer-checked:bg-brand-50/50 transition-all duration-300 flex flex-col">
-                            <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center mb-4 group-hover:-translate-y-1 group-hover:bg-brand-100 group-hover:text-brand-600 peer-checked:bg-brand-600 peer-checked:text-white transition-all duration-300">
-                                <i data-lucide="users-2" class="w-6 h-6"></i>
+                        <div class="h-full p-5 rounded-3xl border-2 border-slate-200 bg-white hover:shadow-lg hover:border-slate-300 peer-checked:border-brand-600 peer-checked:bg-brand-50/50 transition-all duration-300 flex flex-col">
+                            <div class="w-11 h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center mb-3 group-hover:-translate-y-1 group-hover:bg-brand-100 group-hover:text-brand-600 peer-checked:bg-brand-600 peer-checked:text-white transition-all duration-300">
+                                <i data-lucide="users-2" class="w-5 h-5"></i>
                             </div>
-                            <h4 class="font-bold text-slate-900 mb-2 text-lg">Recrutamento</h4>
-                            <p class="text-sm text-slate-500 leading-relaxed">Abertura de vagas, headcount, promoções e descrições de cargo.</p>
+                            <h4 class="font-bold text-slate-900 mb-1.5 text-base">Recrutamento</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed">Abertura de vagas, headcount, promoções e descrições de cargo.</p>
                             <div class="absolute top-4 right-4 opacity-0 peer-checked:opacity-100 text-brand-600 transition-all scale-50 peer-checked:scale-100 duration-300">
-                                <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
                             </div>
                         </div>
                     </label>
-
-                    <!-- T&D -->
                     <label class="cursor-pointer relative group">
                         <input type="radio" name="categoria_gg" value="td" class="peer sr-only" onchange="toggleFormSections(this.value)">
-                        <div class="h-full p-6 rounded-3xl border-2 border-slate-200 bg-white hover:shadow-lg hover:border-slate-300 peer-checked:border-brand-600 peer-checked:bg-brand-50/50 transition-all duration-300 flex flex-col">
-                            <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center mb-4 group-hover:-translate-y-1 group-hover:bg-brand-100 group-hover:text-brand-600 peer-checked:bg-brand-600 peer-checked:text-white transition-all duration-300">
-                                <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+                        <div class="h-full p-5 rounded-3xl border-2 border-slate-200 bg-white hover:shadow-lg hover:border-slate-300 peer-checked:border-brand-600 peer-checked:bg-brand-50/50 transition-all duration-300 flex flex-col">
+                            <div class="w-11 h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center mb-3 group-hover:-translate-y-1 group-hover:bg-brand-100 group-hover:text-brand-600 peer-checked:bg-brand-600 peer-checked:text-white transition-all duration-300">
+                                <i data-lucide="graduation-cap" class="w-5 h-5"></i>
                             </div>
-                            <h4 class="font-bold text-slate-900 mb-2 text-lg">Treinamento</h4>
-                            <p class="text-sm text-slate-500 leading-relaxed">Capacitações externas, workshops, mentorias e auxílio educação.</p>
+                            <h4 class="font-bold text-slate-900 mb-1.5 text-base">Treinamento</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed">Capacitações externas, workshops, mentorias e auxílio educação.</p>
                             <div class="absolute top-4 right-4 opacity-0 peer-checked:opacity-100 text-brand-600 transition-all scale-50 peer-checked:scale-100 duration-300">
-                                <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
                             </div>
                         </div>
                     </label>
-
-                    <!-- DP -->
                     <label class="cursor-pointer relative group">
                         <input type="radio" name="categoria_gg" value="dp" class="peer sr-only" onchange="toggleFormSections(this.value)">
-                        <div class="h-full p-6 rounded-3xl border-2 border-slate-200 bg-white hover:shadow-lg hover:border-slate-300 peer-checked:border-brand-600 peer-checked:bg-brand-50/50 transition-all duration-300 flex flex-col">
-                            <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center mb-4 group-hover:-translate-y-1 group-hover:bg-brand-100 group-hover:text-brand-600 peer-checked:bg-brand-600 peer-checked:text-white transition-all duration-300">
-                                <i data-lucide="file-signature" class="w-6 h-6"></i>
+                        <div class="h-full p-5 rounded-3xl border-2 border-slate-200 bg-white hover:shadow-lg hover:border-slate-300 peer-checked:border-brand-600 peer-checked:bg-brand-50/50 transition-all duration-300 flex flex-col">
+                            <div class="w-11 h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center mb-3 group-hover:-translate-y-1 group-hover:bg-brand-100 group-hover:text-brand-600 peer-checked:bg-brand-600 peer-checked:text-white transition-all duration-300">
+                                <i data-lucide="file-signature" class="w-5 h-5"></i>
                             </div>
-                            <h4 class="font-bold text-slate-900 mb-2 text-lg">Depto. Pessoal</h4>
-                            <p class="text-sm text-slate-500 leading-relaxed">Férias, benefícios, atestados, folha de ponto e desligamentos.</p>
+                            <h4 class="font-bold text-slate-900 mb-1.5 text-base">Depto. Pessoal</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed">Férias, benefícios, atestados, folha de ponto e desligamentos.</p>
                             <div class="absolute top-4 right-4 opacity-0 peer-checked:opacity-100 text-brand-600 transition-all scale-50 peer-checked:scale-100 duration-300">
-                                <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
                             </div>
                         </div>
                     </label>
-
-                    <!-- Clima -->
                     <label class="cursor-pointer relative group">
                         <input type="radio" name="categoria_gg" value="clima" class="peer sr-only" onchange="toggleFormSections(this.value)">
-                        <div class="h-full p-6 rounded-3xl border-2 border-slate-200 bg-white hover:shadow-lg hover:border-slate-300 peer-checked:border-brand-600 peer-checked:bg-brand-50/50 transition-all duration-300 flex flex-col">
-                            <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center mb-4 group-hover:-translate-y-1 group-hover:bg-brand-100 group-hover:text-brand-600 peer-checked:bg-brand-600 peer-checked:text-white transition-all duration-300">
-                                <i data-lucide="megaphone" class="w-6 h-6"></i>
+                        <div class="h-full p-5 rounded-3xl border-2 border-slate-200 bg-white hover:shadow-lg hover:border-slate-300 peer-checked:border-brand-600 peer-checked:bg-brand-50/50 transition-all duration-300 flex flex-col">
+                            <div class="w-11 h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center mb-3 group-hover:-translate-y-1 group-hover:bg-brand-100 group-hover:text-brand-600 peer-checked:bg-brand-600 peer-checked:text-white transition-all duration-300">
+                                <i data-lucide="megaphone" class="w-5 h-5"></i>
                             </div>
-                            <h4 class="font-bold text-slate-900 mb-2 text-lg">Comunicados</h4>
-                            <p class="text-sm text-slate-500 leading-relaxed">Disparos oficiais, eventos, endomarketing e cultura corporativa.</p>
+                            <h4 class="font-bold text-slate-900 mb-1.5 text-base">Comunicados</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed">Disparos oficiais, eventos, endomarketing e cultura corporativa.</p>
                             <div class="absolute top-4 right-4 opacity-0 peer-checked:opacity-100 text-brand-600 transition-all scale-50 peer-checked:scale-100 duration-300">
-                                <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
                             </div>
                         </div>
                     </label>
-
                 </div>
             </div>
 
-            <!-- STEP 3: Formulário Dinâmico -->
-            <div id="dynamic-form-container" class="bg-white rounded-3xl shadow-md shadow-brand-900/5 border border-slate-200 p-8 hidden">
-                <h3 class="text-lg font-bold text-slate-900 mb-8 flex items-center gap-3 border-b border-slate-100 pb-4">
-                    <div class="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600 font-bold">3</div>
+            <!-- STEP 3: Dynamic Forms -->
+            <div id="dynamic-form-container" class="bg-white rounded-3xl shadow-md border border-slate-200 p-7 hidden">
+                <h3 class="text-base font-bold text-slate-900 mb-7 flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div class="w-7 h-7 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600 font-bold text-sm">3</div>
                     Detalhes da Solicitação
                 </h3>
 
-                <!-- ===== RECRUTAMENTO ===== -->
-                <div id="form-rs" class="dynamic-section space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- RECRUTAMENTO -->
+                <div id="form-rs" class="dynamic-section space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Motivo da Vaga *</label>
                             <select id="rs-motivo" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50">
                                 <option value="" disabled selected>Selecione...</option>
-                                <option value="nova_vaga">Nova Vaga (Aumento de Quadro)</option>
-                                <option value="substituicao">Substituição</option>
-                                <option value="promocao">Promoção Interna</option>
-                                <option value="reposicao">Reposição</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Título do Cargo / Posição *</label>
-                            <input type="text" id="rs-cargo" placeholder="Ex: Analista de Dados Sênior"
-                                class="w-full px-4 py-3 text-slate-900 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Título do Cargo *</label>
+                            <input type="text" id="rs-cargo" placeholder="Ex: Analista de Dados Sênior" class="w-full px-4 py-3 text-slate-900 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Modalidade de Trabalho</label>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Modalidade</label>
                             <select id="rs-modalidade" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50">
-                                <option value="" disabled selected>Selecione...</option>
+                                <option value="">Selecione...</option>
                                 <option value="presencial">Presencial</option>
                                 <option value="hibrido">Híbrido</option>
                                 <option value="remoto">Remoto</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Faixa Salarial Prevista</label>
-                            <input type="text" id="rs-salario" placeholder="Ex: R$ 6.000 – R$ 8.000"
-                                class="w-full px-4 py-3 text-slate-900 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Faixa Salarial</label>
+                            <input type="text" id="rs-salario" placeholder="Ex: R$ 6.000 – R$ 8.000" class="w-full px-4 py-3 text-slate-900 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Descrição da Vaga & Requisitos *</label>
-                        <textarea id="rs-descricao" rows="4" placeholder="Descreva as responsabilidades principais, skills técnicas necessárias e diferenciais desejados..."
-                            class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50 resize-y"></textarea>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Descrição & Requisitos *</label>
+                        <textarea id="rs-descricao" rows="4" placeholder="Responsabilidades, skills e diferenciais..." class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50 resize-y"></textarea>
                     </div>
                 </div>
 
-                <!-- ===== TREINAMENTO ===== -->
-                <div id="form-td" class="dynamic-section space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- TREINAMENTO -->
+                <div id="form-td" class="dynamic-section space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Tipo de Desenvolvimento *</label>
                             <select id="td-tipo" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50">
-                                <option value="" disabled selected>Selecione a categoria...</option>
-                                <option value="curso_externo">Curso Externo / Certificação</option>
-                                <option value="in_company">Treinamento In-Company</option>
-                                <option value="mentoria">Mentoria</option>
-                                <option value="auxilio_edu">Auxílio Educação</option>
-                                <option value="workshop">Workshop / Palestra</option>
+                                <option value="" disabled selected>Selecione...</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Tema Principal *</label>
-                            <input type="text" id="td-tema" placeholder="Ex: Liderança, Excel Avançado, Inglês..."
-                                class="w-full px-4 py-3 text-slate-900 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <input type="text" id="td-tema" placeholder="Ex: Liderança, Excel Avançado..." class="w-full px-4 py-3 text-slate-900 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Número de Participantes</label>
-                            <input type="number" id="td-participantes" min="1" placeholder="Ex: 15"
-                                class="w-full px-4 py-3 text-slate-900 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Nº de Participantes</label>
+                            <input type="number" id="td-participantes" min="1" placeholder="Ex: 15" class="w-full px-4 py-3 text-slate-900 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Orçamento Estimado (R$)</label>
-                            <input type="text" id="td-orcamento" placeholder="Ex: R$ 5.000"
-                                class="w-full px-4 py-3 text-slate-900 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Orçamento Estimado</label>
+                            <input type="text" id="td-orcamento" placeholder="Ex: R$ 5.000" class="w-full px-4 py-3 text-slate-900 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
                         </div>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Justificativa & Objetivos *</label>
-                        <textarea id="td-justificativa" rows="3" placeholder="Por que este treinamento é necessário? Qual impacto esperado para a equipe?"
-                            class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50 resize-y"></textarea>
+                        <textarea id="td-justificativa" rows="3" placeholder="Por que este treinamento é necessário? Qual impacto esperado?" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50 resize-y"></textarea>
                     </div>
                 </div>
 
-                <!-- ===== DEPARTAMENTO PESSOAL ===== -->
-                <div id="form-dp" class="dynamic-section space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- DEPARTAMENTO PESSOAL -->
+                <div id="form-dp" class="dynamic-section space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Categoria da Solicitação *</label>
                             <select id="dp-categoria" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50">
                                 <option value="" disabled selected>Selecione...</option>
-                                <option value="ferias">Férias (Solicitação / Alteração)</option>
-                                <option value="beneficios">Benefícios (Plano, VT, VR...)</option>
-                                <option value="afastamento">Envio de Atestado / Licença</option>
-                                <option value="desligamento">Desligamento</option>
-                                <option value="ponto">Ajuste de Ponto / Banco de Horas</option>
-                                <option value="declaracao">Declaração / Informe de Rendimentos</option>
-                                <option value="outro">Outro</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Nome do Colaborador (se diferente de você)</label>
-                            <input type="text" id="dp-colaborador" placeholder="Nome do colaborador em questão"
-                                class="w-full px-4 py-3 text-slate-900 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Colaborador (se diferente de você)</label>
+                            <input type="text" id="dp-colaborador" placeholder="Nome do colaborador" class="w-full px-4 py-3 text-slate-900 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Detalhes da Solicitação *</label>
-                        <textarea id="dp-detalhes" rows="4" placeholder="Descreva datas, períodos, dúvidas ou justificativas detalhadas..."
-                            class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50 resize-y"></textarea>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Detalhes *</label>
+                        <textarea id="dp-detalhes" rows="4" placeholder="Datas, períodos, dúvidas ou justificativas..." class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50 resize-y"></textarea>
                     </div>
                 </div>
 
-                <!-- ===== COMUNICADOS & CLIMA ===== -->
-                <div id="form-clima" class="dynamic-section space-y-8">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- COMUNICADOS -->
+                <div id="form-clima" class="dynamic-section space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Classificação do Pedido *</label>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Classificação *</label>
                             <select id="clima-tipo" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50">
                                 <option value="" disabled selected>Selecione o tipo...</option>
-                                <option value="aviso_geral">Aviso Institucional / RH</option>
-                                <option value="lancamento">Lançamento de Produto/Projeto</option>
-                                <option value="evento">Convite para Evento Interno</option>
-                                <option value="manutencao">Alerta de TI / Manutenção</option>
-                                <option value="outro">Outro (Cultura/Engajamento)</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Tom de Voz Desejado *</label>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Tom de Voz *</label>
                             <select id="clima-tom" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50">
                                 <option value="" disabled selected>Como devemos falar?</option>
                                 <option value="formal">Formal & Corporativo</option>
                                 <option value="inspiracional">Inspiracional & Motivador</option>
-                                <option value="descontraido">Descontraído (Emojis, tom leve)</option>
+                                <option value="descontraido">Descontraído (Emojis)</option>
                                 <option value="urgente">Urgente & Alerta</option>
                             </select>
                         </div>
                     </div>
-
-                    <!-- Canais -->
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-3">Canais de Disparo (selecione um ou mais) *</label>
-                        <div class="flex flex-wrap gap-3" id="canaisWrapper">
-                            <label class="relative cursor-pointer">
-                                <input type="checkbox" value="email" class="peer sr-only canal-check">
-                                <div class="px-4 py-2 rounded-lg border-2 border-slate-200 text-slate-600 bg-white hover:bg-slate-50 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 font-medium text-sm transition-all flex items-center gap-2">
-                                    <i data-lucide="mail" class="w-4 h-4"></i> E-mail Corporativo
-                                </div>
-                            </label>
-                            <label class="relative cursor-pointer">
-                                <input type="checkbox" value="slack" class="peer sr-only canal-check">
-                                <div class="px-4 py-2 rounded-lg border-2 border-slate-200 text-slate-600 bg-white hover:bg-slate-50 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 font-medium text-sm transition-all flex items-center gap-2">
-                                    <i data-lucide="message-square" class="w-4 h-4"></i> Slack / Teams
-                                </div>
-                            </label>
-                            <label class="relative cursor-pointer">
-                                <input type="checkbox" value="intranet" class="peer sr-only canal-check">
-                                <div class="px-4 py-2 rounded-lg border-2 border-slate-200 text-slate-600 bg-white hover:bg-slate-50 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 font-medium text-sm transition-all flex items-center gap-2">
-                                    <i data-lucide="monitor" class="w-4 h-4"></i> Intranet Tripla
-                                </div>
-                            </label>
-                            <label class="relative cursor-pointer">
-                                <input type="checkbox" value="whatsapp" class="peer sr-only canal-check">
-                                <div class="px-4 py-2 rounded-lg border-2 border-slate-200 text-slate-600 bg-white hover:bg-slate-50 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 font-medium text-sm transition-all flex items-center gap-2">
-                                    <i data-lucide="smartphone" class="w-4 h-4"></i> WhatsApp Corporativo
-                                </div>
-                            </label>
+                        <label class="block text-sm font-semibold text-slate-700 mb-3">Canais de Disparo *</label>
+                        <div class="flex flex-wrap gap-3">
+                            <label class="relative cursor-pointer"><input type="checkbox" value="email" class="peer sr-only canal-check"><div class="px-4 py-2 rounded-lg border-2 border-slate-200 text-slate-600 bg-white hover:bg-slate-50 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 font-medium text-sm transition-all flex items-center gap-2"><i data-lucide="mail" class="w-4 h-4"></i> E-mail</div></label>
+                            <label class="relative cursor-pointer"><input type="checkbox" value="slack" class="peer sr-only canal-check"><div class="px-4 py-2 rounded-lg border-2 border-slate-200 text-slate-600 bg-white hover:bg-slate-50 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 font-medium text-sm transition-all flex items-center gap-2"><i data-lucide="message-square" class="w-4 h-4"></i> Slack</div></label>
+                            <label class="relative cursor-pointer"><input type="checkbox" value="intranet" class="peer sr-only canal-check"><div class="px-4 py-2 rounded-lg border-2 border-slate-200 text-slate-600 bg-white hover:bg-slate-50 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 font-medium text-sm transition-all flex items-center gap-2"><i data-lucide="monitor" class="w-4 h-4"></i> Intranet</div></label>
+                            <label class="relative cursor-pointer"><input type="checkbox" value="whatsapp" class="peer sr-only canal-check"><div class="px-4 py-2 rounded-lg border-2 border-slate-200 text-slate-600 bg-white hover:bg-slate-50 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 font-medium text-sm transition-all flex items-center gap-2"><i data-lucide="smartphone" class="w-4 h-4"></i> WhatsApp</div></label>
                         </div>
                         <p class="error-msg" id="err-canais">Selecione ao menos um canal.</p>
                     </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Público-alvo *</label>
-                            <input type="text" id="clima-publico" placeholder="Ex: Toda a empresa, Apenas Líderes, Squad TI..."
-                                class="w-full px-4 py-3 text-slate-900 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <input type="text" id="clima-publico" placeholder="Toda a empresa, Apenas Líderes..." class="w-full px-4 py-3 text-slate-900 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Data e Hora Sugerida do Disparo *</label>
-                            <input type="datetime-local" id="clima-data"
-                                class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50 text-slate-700">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Data e Hora Sugerida *</label>
+                            <input type="datetime-local" id="clima-data" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50 text-slate-700">
                         </div>
                     </div>
-
-                    <!-- Necessidade de Design -->
                     <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-start gap-4">
                         <input type="checkbox" id="needsDesign" class="mt-0.5 w-5 h-5 text-brand-600 bg-white border-gray-300 rounded focus:ring-brand-500">
                         <div>
                             <label for="needsDesign" class="text-sm font-semibold text-slate-800 cursor-pointer block">Solicitar criação de Peça Gráfica / Banner</label>
-                            <p class="text-xs text-slate-500 mt-1">Marque se o comunicado precisa de visual pelo time de Design (adiciona +48h ao SLA).</p>
+                            <p class="text-xs text-slate-500 mt-1">Aciona o time de Design (+48h SLA).</p>
                         </div>
                     </div>
-
-                    <!-- Briefing -->
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Conteúdo Base / Briefing Completo *</label>
-                        <textarea id="clima-briefing" rows="5" placeholder="Escreva aqui o que precisa ser comunicado. Não se preocupe com formatação final — nosso time irá revisar. Inclua links ou referências importantes."
-                            class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50 resize-y"></textarea>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Briefing Completo *</label>
+                        <textarea id="clima-briefing" rows="5" placeholder="Escreva o que precisa ser comunicado. Inclua links e referências." class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50 resize-y"></textarea>
                     </div>
                 </div>
 
-                <!-- Anexos (universal) -->
-                <div class="mt-10">
+                <!-- Anexos -->
+                <div class="mt-8">
                     <label class="block text-sm font-semibold text-slate-900 mb-3">Anexos e Referências</label>
-                    <div id="dropzone" class="border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center bg-slate-50 hover:bg-brand-50/50 hover:border-brand-400 transition-colors cursor-pointer group">
+                    <div id="dropzone" class="border-2 border-dashed border-slate-300 rounded-2xl p-7 text-center bg-slate-50 hover:bg-brand-50/50 hover:border-brand-400 transition-colors cursor-pointer group">
                         <input type="file" id="arquivo" multiple>
-                        <div class="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                            <i data-lucide="cloud-upload" class="w-6 h-6 text-brand-600"></i>
+                        <div class="w-11 h-11 rounded-full bg-white shadow-sm flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                            <i data-lucide="cloud-upload" class="w-5 h-5 text-brand-600"></i>
                         </div>
                         <p class="text-sm font-medium text-slate-700 mb-1" id="drop-text">Clique para anexar ou arraste arquivos aqui</p>
-                        <p class="text-xs text-slate-500">Imagens, planilhas, atestados ou briefings (Máx 15MB por arquivo)</p>
+                        <p class="text-xs text-slate-500">Imagens, planilhas, atestados (Máx 15MB)</p>
                         <div id="file-list" class="mt-4 flex flex-col gap-2 max-w-md mx-auto hidden"></div>
                     </div>
                 </div>
 
                 <!-- Ações -->
-                <div class="flex flex-col-reverse sm:flex-row items-center justify-between mt-10 gap-4 pt-6 border-t border-slate-100">
-                    <button type="button" onclick="resetFullForm()" class="w-full sm:w-auto px-6 py-3 text-sm font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors">
-                        ← Cancelar e Recomeçar
-                    </button>
-                    <button type="submit" id="submitBtn" class="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-brand-600/30 hover:shadow-brand-600/50 transition-all duration-300 active:scale-95">
+                <div class="flex flex-col-reverse sm:flex-row items-center justify-between mt-8 gap-4 pt-6 border-t border-slate-100">
+                    <button type="button" onclick="resetFullForm()" class="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors">← Cancelar</button>
+                    <button type="submit" id="submitBtn" class="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-brand-600/30 transition-all active:scale-95">
                         <span>Enviar Solicitação</span>
                         <i data-lucide="arrow-right" class="w-4 h-4"></i>
                     </button>
@@ -538,23 +374,19 @@
     </div>
 </main>
 
-<!-- ===================== SUCCESS MODAL ===================== -->
+<!-- SUCCESS MODAL -->
 <div id="successModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
     <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal()"></div>
     <div class="relative bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl transform scale-95 transition-transform duration-300" id="modalContent">
-
         <div class="absolute -top-12 left-1/2 -translate-x-1/2">
             <div class="w-24 h-24 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/40 border-4 border-white">
                 <i data-lucide="check" class="h-10 w-10 text-white"></i>
             </div>
         </div>
-
         <div class="pt-12 text-center">
             <h3 class="text-2xl font-extrabold text-slate-900 mb-2">Solicitação Recebida!</h3>
-            <p class="text-slate-600 text-sm mb-6 leading-relaxed">
-                Sua requisição foi encaminhada para a equipe de Gente & Gestão da Tripla. Acompanhe o status pelo seu e-mail corporativo.
-            </p>
-            <div class="bg-brand-50 rounded-xl p-4 mb-8 text-sm text-brand-800 font-mono text-center border border-brand-100">
+            <p class="text-slate-600 text-sm mb-5 leading-relaxed">Sua requisição foi encaminhada para a equipe G&G. Acompanhe pelo seu e-mail corporativo.</p>
+            <div class="bg-brand-50 rounded-xl p-4 mb-6 text-sm text-brand-800 font-mono text-center border border-brand-100">
                 Ticket ID: <span id="modalTicketId" class="font-bold">#TRP-???</span>
             </div>
             <div class="text-xs text-slate-500 mb-6 bg-slate-50 rounded-lg p-3 text-left space-y-1">
@@ -562,60 +394,48 @@
                 <p><span class="font-semibold">Solicitante:</span> <span id="modalNome">—</span></p>
                 <p><span class="font-semibold">Status:</span> <span class="text-blue-600 font-semibold">📥 Novas (Triagem)</span></p>
             </div>
-            <button onclick="closeModal()" class="w-full py-3.5 px-4 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl transition-colors shadow-md">
-                Voltar ao Início
-            </button>
+            <button onclick="closeModal()" class="w-full py-3.5 px-4 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl transition-colors shadow-md">Voltar ao Início</button>
         </div>
     </div>
 </div>
 
-<!-- Toast -->
 <div id="toast"></div>
 
-<!-- Footer -->
-<footer class="text-center py-8 text-slate-400 text-xs relative z-20">
-    <p>&copy; 2026 Tripla — Hub Gente & Gestão. Uso Interno Corporativo.</p>
+<footer class="text-center py-6 text-slate-400 text-xs relative z-20">
+    <p>&copy; 2026 Tripla — Hub Gente & Gestão. Uso Interno.</p>
 </footer>
 
-<!-- ===================== SCRIPTS ===================== -->
 <script>
     lucide.createIcons();
 
-    // ==================== TOGGLE FORM SECTIONS ====================
+    // Floating label fix on select
+    document.getElementById('area').addEventListener('change', function() {
+        if (this.value) this.style.color = '#1e293b';
+    });
+
     function toggleFormSections(value) {
-        const container = document.getElementById('dynamic-form-container');
-        const sections = document.querySelectorAll('.dynamic-section');
-
-        container.classList.remove('hidden');
-        sections.forEach(sec => sec.classList.remove('active'));
-
+        document.getElementById('dynamic-form-container').classList.remove('hidden');
+        document.querySelectorAll('.dynamic-section').forEach(s => s.classList.remove('active'));
         const target = document.getElementById('form-' + value);
         if (target) {
             target.classList.add('active');
             lucide.createIcons();
-            setTimeout(() => {
-                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 150);
+            setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
         }
-
-        // Hide categoria error
         document.getElementById('err-categoria').classList.remove('show');
     }
 
-    // ==================== FILE DRAG & DROP ====================
+    // File drag & drop
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('arquivo');
-    const dropText = document.getElementById('drop-text');
-    const fileList = document.getElementById('file-list');
+    const dropText  = document.getElementById('drop-text');
+    const fileList  = document.getElementById('file-list');
 
     dropzone.addEventListener('click', () => fileInput.click());
-
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
-        dropzone.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); });
-    });
-    ['dragenter', 'dragover'].forEach(evt => dropzone.addEventListener(evt, () => dropzone.classList.add('drag-active')));
-    ['dragleave', 'drop'].forEach(evt => dropzone.addEventListener(evt, () => dropzone.classList.remove('drag-active')));
-    dropzone.addEventListener('drop', (e) => handleFiles(e.dataTransfer.files));
+    ['dragenter','dragover','dragleave','drop'].forEach(e => dropzone.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); }));
+    ['dragenter','dragover'].forEach(e => dropzone.addEventListener(e, () => dropzone.classList.add('drag-active')));
+    ['dragleave','drop'].forEach(e => dropzone.addEventListener(e, () => dropzone.classList.remove('drag-active')));
+    dropzone.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
     fileInput.addEventListener('change', function() { handleFiles(this.files); });
 
     function handleFiles(files) {
@@ -624,21 +444,12 @@
         fileList.classList.remove('hidden');
         fileList.innerHTML = '';
         Array.from(files).forEach(file => {
-            let icon = 'file';
-            if (file.type.includes('image')) icon = 'image';
-            if (file.type.includes('pdf')) icon = 'file-text';
-            fileList.innerHTML += `
-                <div class="flex items-center gap-3 bg-white p-2.5 rounded-lg border border-slate-200 text-left shadow-sm" onclick="event.stopPropagation()">
-                    <div class="bg-brand-50 p-2 rounded text-brand-600"><i data-lucide="${icon}" class="w-4 h-4"></i></div>
-                    <div class="flex-grow truncate">
-                        <p class="text-xs font-semibold text-slate-700 truncate">${file.name}</p>
-                        <p class="text-[10px] text-slate-400">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                    </div>
-                    <button type="button" class="text-slate-400 hover:text-red-500 p-1 rounded-md hover:bg-red-50 flex-shrink-0"
-                        onclick="this.closest('div.flex').remove(); if(fileList.children.length===0) resetFileInput();">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
-                </div>`;
+            let icon = file.type.includes('image') ? 'image' : file.type.includes('pdf') ? 'file-text' : 'file';
+            fileList.innerHTML += `<div class="flex items-center gap-3 bg-white p-2.5 rounded-lg border border-slate-200 text-left shadow-sm" onclick="event.stopPropagation()">
+                <div class="bg-brand-50 p-2 rounded text-brand-600"><i data-lucide="${icon}" class="w-4 h-4"></i></div>
+                <div class="flex-grow truncate"><p class="text-xs font-semibold text-slate-700 truncate">${file.name}</p><p class="text-[10px] text-slate-400">${(file.size/1024/1024).toFixed(2)} MB</p></div>
+                <button type="button" class="text-slate-400 hover:text-red-500 p-1 rounded hover:bg-red-50" onclick="this.closest('.flex').remove()"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>`;
         });
         lucide.createIcons();
     }
@@ -655,103 +466,51 @@
         document.getElementById('dynamic-form-container').classList.add('hidden');
         document.querySelectorAll('.dynamic-section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.error-msg').forEach(e => e.classList.remove('show'));
-        document.querySelectorAll('.field-error').forEach(e => e.classList.remove('field-error'));
         resetFileInput();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // ==================== VALIDATION ====================
     function validateForm() {
         let valid = true;
-
-        const nome = document.getElementById('nome');
+        const nome  = document.getElementById('nome');
         const email = document.getElementById('email');
-        const area = document.getElementById('area');
-        const categoria = document.querySelector('input[name="categoria_gg"]:checked');
+        const area  = document.getElementById('area');
+        const cat   = document.querySelector('input[name="categoria_gg"]:checked');
 
-        // Nome
-        if (!nome.value.trim()) {
-            showFieldError('nome'); valid = false;
-        } else clearFieldError('nome');
-
-        // Email
-        const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!email.value.trim() || !emailRe.test(email.value)) {
-            showFieldError('email'); valid = false;
-        } else clearFieldError('email');
-
-        // Área
-        if (!area.value) {
-            showFieldError('area'); valid = false;
-        } else clearFieldError('area');
-
-        // Categoria
-        if (!categoria) {
-            document.getElementById('err-categoria').classList.add('show');
-            valid = false;
-        } else {
+        if (!nome.value.trim())              { nome.classList.add('field-error');  document.getElementById('err-nome').classList.add('show');  valid = false; }
+        else                                  { nome.classList.remove('field-error'); document.getElementById('err-nome').classList.remove('show'); }
+        if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) { email.classList.add('field-error'); document.getElementById('err-email').classList.add('show'); valid = false; }
+        else                                  { email.classList.remove('field-error'); document.getElementById('err-email').classList.remove('show'); }
+        if (!area.value)                      { area.classList.add('field-error');  document.getElementById('err-area').classList.add('show');  valid = false; }
+        else                                  { area.classList.remove('field-error'); document.getElementById('err-area').classList.remove('show'); }
+        if (!cat)                             { document.getElementById('err-categoria').classList.add('show'); valid = false; }
+        else {
             document.getElementById('err-categoria').classList.remove('show');
-
-            // Categoria-specific validation
-            const cat = categoria.value;
-
-            if (cat === 'rs') {
-                if (!document.getElementById('rs-cargo').value.trim()) { showToast('Informe o Título do Cargo (Recrutamento)'); valid = false; }
-                if (!document.getElementById('rs-descricao').value.trim()) { showToast('Preencha a Descrição da Vaga'); valid = false; }
-            }
-            if (cat === 'td') {
-                if (!document.getElementById('td-tema').value.trim()) { showToast('Informe o Tema do Treinamento'); valid = false; }
-                if (!document.getElementById('td-justificativa').value.trim()) { showToast('Preencha a Justificativa do Treinamento'); valid = false; }
-            }
-            if (cat === 'dp') {
-                if (!document.getElementById('dp-detalhes').value.trim()) { showToast('Preencha os Detalhes da Solicitação DP'); valid = false; }
-            }
-            if (cat === 'clima') {
-                const canaisSelecionados = [...document.querySelectorAll('.canal-check:checked')];
-                if (!canaisSelecionados.length) {
-                    document.getElementById('err-canais').classList.add('show');
-                    valid = false;
-                } else {
-                    document.getElementById('err-canais').classList.remove('show');
-                }
-                if (!document.getElementById('clima-briefing').value.trim()) { showToast('Preencha o Briefing do Comunicado'); valid = false; }
-                if (!document.getElementById('clima-publico').value.trim()) { showToast('Informe o Público-alvo'); valid = false; }
+            if (cat.value === 'rs' && !document.getElementById('rs-cargo').value.trim())       { showToast('Informe o Título do Cargo.'); valid = false; }
+            if (cat.value === 'rs' && !document.getElementById('rs-descricao').value.trim())   { showToast('Preencha a Descrição da Vaga.'); valid = false; }
+            if (cat.value === 'td' && !document.getElementById('td-tema').value.trim())        { showToast('Informe o Tema do Treinamento.'); valid = false; }
+            if (cat.value === 'td' && !document.getElementById('td-justificativa').value.trim()){ showToast('Preencha a Justificativa.'); valid = false; }
+            if (cat.value === 'dp' && !document.getElementById('dp-detalhes').value.trim())    { showToast('Preencha os Detalhes da solicitação.'); valid = false; }
+            if (cat.value === 'clima') {
+                const canais = [...document.querySelectorAll('.canal-check:checked')];
+                if (!canais.length) { document.getElementById('err-canais').classList.add('show'); valid = false; }
+                else                 document.getElementById('err-canais').classList.remove('show');
+                if (!document.getElementById('clima-briefing').value.trim()) { showToast('Preencha o Briefing.'); valid = false; }
             }
         }
-
         return valid;
     }
 
-    function showFieldError(fieldId) {
-        const el = document.getElementById(fieldId);
-        const err = document.getElementById('err-' + fieldId);
-        if (el) el.classList.add('field-error');
-        if (err) err.classList.add('show');
-    }
-
-    function clearFieldError(fieldId) {
-        const el = document.getElementById(fieldId);
-        const err = document.getElementById('err-' + fieldId);
-        if (el) el.classList.remove('field-error');
-        if (err) err.classList.remove('show');
-    }
-
-    // ==================== MODAL ====================
-    const successModal = document.getElementById('successModal');
-    const modalContent = document.getElementById('modalContent');
+    const successModal  = document.getElementById('successModal');
+    const modalContent  = document.getElementById('modalContent');
 
     function showModal(ticketId, categoria, nome) {
-        const catLabels = { rs: 'Recrutamento & Seleção', td: 'Treinamento & Desenvolvimento', dp: 'Departamento Pessoal', clima: 'Comunicados & Clima' };
+        const labels = { rs:'Recrutamento & Seleção', td:'Treinamento & Desenvolvimento', dp:'Departamento Pessoal', clima:'Comunicados & Clima' };
         document.getElementById('modalTicketId').textContent = '#TRP-' + ticketId;
-        document.getElementById('modalCategoria').textContent = catLabels[categoria] || categoria;
+        document.getElementById('modalCategoria').textContent = labels[categoria] || categoria;
         document.getElementById('modalNome').textContent = nome;
-
         successModal.classList.remove('hidden');
-        setTimeout(() => {
-            successModal.classList.remove('opacity-0');
-            modalContent.classList.remove('scale-95');
-            modalContent.classList.add('scale-100');
-        }, 10);
+        setTimeout(() => { successModal.classList.remove('opacity-0'); modalContent.classList.remove('scale-95'); modalContent.classList.add('scale-100'); }, 10);
         lucide.createIcons();
     }
 
@@ -762,7 +521,6 @@
         setTimeout(() => successModal.classList.add('hidden'), 300);
     }
 
-    // ==================== TOAST ====================
     function showToast(msg) {
         const t = document.getElementById('toast');
         t.textContent = msg;
@@ -771,14 +529,11 @@
     }
 </script>
 
-<!-- ==================== FIREBASE (module) ==================== -->
+<!-- FIREBASE MODULE -->
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
-    import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+    import { getFirestore, collection, addDoc, getDoc, doc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 
-    // ── Credenciais do Firebase ──────────────────────────────────────────────
-    // Substitua os valores abaixo pelas suas credenciais do Firebase Console.
-    // Em Preferências do Kanban você também pode salvá-las no localStorage.
     const firebaseConfig = {
         apiKey:            "AIzaSyDS7ObifHn2minG2TMcdUGlRyD8SP8vcAs",
         authDomain:        "tripla-gg-portal.firebaseapp.com",
@@ -787,129 +542,133 @@
         messagingSenderId: "887500083882",
         appId:             "1:887500083882:web:05af6ad257ce17fed7b6d3"
     };
-    // ─────────────────────────────────────────────────────────────────────────
 
     let db = null;
 
-    // Inicializa o Firebase e atualiza o status visual
     function setStatus(ok, msg) {
         const dot = document.getElementById('fbDot');
-        const statusEl = document.getElementById('fbStatus');
-        if (dot) { dot.className = 'fb-dot ' + (ok ? 'green' : 'red'); }
-        if (statusEl) statusEl.textContent = msg;
+        if (dot) dot.className = 'fb-dot ' + (ok ? 'green' : 'red');
+        const s = document.getElementById('fbStatus');
+        if (s) s.textContent = msg;
     }
 
     try {
         const app = initializeApp(firebaseConfig);
         db = getFirestore(app);
         setStatus(true, 'Conectado');
-    } catch (err) {
-        console.warn('Firebase init error:', err.message);
+
+        // Load form config from Firestore
+        const cfgSnap = await getDoc(doc(db, 'config', 'formulario'));
+        if (cfgSnap.exists()) {
+            const cfg = cfgSnap.data();
+            populateSelect('area',         cfg.departamentos    || []);
+            populateSelect('rs-motivo',    cfg.motivosVaga      || []);
+            populateSelect('td-tipo',      cfg.tiposTreinamento || []);
+            populateSelect('dp-categoria', cfg.categoriasDP     || []);
+            populateSelect('clima-tipo',   cfg.tiposComunicado  || []);
+        } else {
+            // Fallback defaults
+            populateSelect('area',         ['Tecnologia','Marketing','Financeiro','Comercial','Operações','Segurança da Informação','RH','Jurídico']);
+            populateSelect('rs-motivo',    ['Nova Vaga (Aumento de Quadro)','Substituição','Promoção Interna','Reposição']);
+            populateSelect('td-tipo',      ['Curso Externo / Certificação','Treinamento In-Company','Mentoria','Auxílio Educação','Workshop']);
+            populateSelect('dp-categoria', ['Férias','Benefícios','Atestado / Licença','Desligamento','Ajuste de Ponto','Declaração']);
+            populateSelect('clima-tipo',   ['Aviso Institucional','Lançamento de Produto','Evento Interno','Alerta TI','Outro']);
+        }
+    } catch(e) {
         setStatus(false, 'Modo offline');
+        populateSelect('area',         ['Tecnologia','Marketing','Financeiro','Comercial','Operações']);
+        populateSelect('rs-motivo',    ['Nova Vaga','Substituição','Promoção Interna']);
+        populateSelect('td-tipo',      ['Curso Externo','Treinamento Interno','Workshop']);
+        populateSelect('dp-categoria', ['Férias','Benefícios','Atestado','Desligamento']);
+        populateSelect('clima-tipo',   ['Aviso Institucional','Lançamento','Evento','Outro']);
     }
 
-    // Coleta todos os dados do formulário num objeto estruturado
-    function coletarDados(categoria) {
-        const baseData = {
+    function populateSelect(id, items) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        // Keep first (placeholder) option
+        const first = el.options[0];
+        el.innerHTML = '';
+        if (first) el.appendChild(first);
+        items.forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item.toLowerCase().replace(/\s+/g, '_');
+            opt.textContent = item;
+            el.appendChild(opt);
+        });
+    }
+
+    function collectData(categoria) {
+        const base = {
             solicitanteNome:  document.getElementById('nome').value.trim(),
             solicitanteEmail: document.getElementById('email').value.trim(),
             areaSolicitante:  document.getElementById('area').value,
-            categoria:        categoria,
-            status:           'novas',          // → coluna Novas (Triagem) do Kanban
+            categoria,
+            status:           'novas',
             dataCriacao:      serverTimestamp(),
         };
 
-        // Dados específicos por categoria
-        if (categoria === 'rs') {
-            return {
-                ...baseData,
-                titulo:      document.getElementById('rs-cargo').value.trim(),
-                motivoVaga:  document.getElementById('rs-motivo').value,
-                modalidade:  document.getElementById('rs-modalidade').value,
-                salario:     document.getElementById('rs-salario').value.trim(),
-                descricao:   document.getElementById('rs-descricao').value.trim(),
-            };
-        }
-
-        if (categoria === 'td') {
-            return {
-                ...baseData,
-                titulo:         document.getElementById('td-tema').value.trim(),
-                tipoTreinamento:document.getElementById('td-tipo').value,
-                participantes:  document.getElementById('td-participantes').value,
-                orcamento:      document.getElementById('td-orcamento').value.trim(),
-                descricao:      document.getElementById('td-justificativa').value.trim(),
-            };
-        }
-
-        if (categoria === 'dp') {
-            return {
-                ...baseData,
-                titulo:      document.getElementById('dp-categoria').value || 'Solicitação DP',
-                colaborador: document.getElementById('dp-colaborador').value.trim(),
-                descricao:   document.getElementById('dp-detalhes').value.trim(),
-            };
-        }
-
-        if (categoria === 'clima') {
-            const canais = [...document.querySelectorAll('.canal-check:checked')].map(c => c.value);
-            return {
-                ...baseData,
-                titulo:       document.getElementById('clima-tipo').value || 'Comunicado',
-                tom:          document.getElementById('clima-tom').value,
-                canais:       canais,
-                publicoAlvo:  document.getElementById('clima-publico').value.trim(),
-                dataDisparo:  document.getElementById('clima-data').value,
-                needsDesign:  document.getElementById('needsDesign').checked,
-                descricao:    document.getElementById('clima-briefing').value.trim(),
-            };
-        }
-
-        return baseData;
+        if (categoria === 'rs') return { ...base,
+            titulo:      document.getElementById('rs-cargo').value.trim(),
+            rs_cargo:    document.getElementById('rs-cargo').value.trim(),
+            motivoVaga:  document.getElementById('rs-motivo').value,
+            modalidade:  document.getElementById('rs-modalidade').value,
+            salario:     document.getElementById('rs-salario').value.trim(),
+            descricao:   document.getElementById('rs-descricao').value.trim(),
+        };
+        if (categoria === 'td') return { ...base,
+            titulo:          document.getElementById('td-tema').value.trim(),
+            td_tema:         document.getElementById('td-tema').value.trim(),
+            tipoTreinamento: document.getElementById('td-tipo').value,
+            participantes:   document.getElementById('td-participantes').value,
+            orcamento:       document.getElementById('td-orcamento').value.trim(),
+            descricao:       document.getElementById('td-justificativa').value.trim(),
+        };
+        if (categoria === 'dp') return { ...base,
+            titulo:       document.getElementById('dp-categoria').value,
+            dp_categoria: document.getElementById('dp-categoria').value,
+            colaborador:  document.getElementById('dp-colaborador').value.trim(),
+            descricao:    document.getElementById('dp-detalhes').value.trim(),
+        };
+        if (categoria === 'clima') return { ...base,
+            titulo:      document.getElementById('clima-tipo').value,
+            clima_tipo:  document.getElementById('clima-tipo').value,
+            tom:         document.getElementById('clima-tom').value,
+            canais:      [...document.querySelectorAll('.canal-check:checked')].map(c => c.value),
+            publicoAlvo: document.getElementById('clima-publico').value.trim(),
+            dataDisparo: document.getElementById('clima-data').value,
+            needsDesign: document.getElementById('needsDesign').checked,
+            descricao:   document.getElementById('clima-briefing').value.trim(),
+        };
+        return base;
     }
 
-    // Gera um ID legível para o ticket (ex: 8523)
-    function gerarTicketId() {
-        return String(8500 + Math.floor(Math.random() * 499));
-    }
-
-    // ── SUBMIT ────────────────────────────────────────────────────────────────
     document.getElementById('ggForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-
-        // Validação client-side (função global definida no script anterior)
         if (typeof validateForm === 'function' && !validateForm()) return;
 
         const categoriaEl = document.querySelector('input[name="categoria_gg"]:checked');
         if (!categoriaEl) return;
-        const categoria = categoriaEl.value;
 
         const btn = document.getElementById('submitBtn');
         btn.disabled = true;
-        btn.innerHTML = `<svg class="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Processando...`;
+        btn.innerHTML = `<svg class="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Enviando...`;
 
-        const ticketData = coletarDados(categoria);
-        const ticketId = gerarTicketId();
-        ticketData.ticketId = ticketId;
+        const ticketId = String(8500 + Math.floor(Math.random() * 499));
+        const data = collectData(categoriaEl.value);
+        data.ticketId = ticketId;
 
         try {
             if (db) {
-                // Salva no Firestore — o Kanban irá escutar em tempo real
-                const docRef = await addDoc(collection(db, 'tickets'), ticketData);
-                console.log('✅ Ticket salvo no Firestore. ID doc:', docRef.id, '| Ticket ID:', ticketId);
+                await addDoc(collection(db, 'tickets'), data);
             } else {
-                // Modo offline: simula delay
-                await new Promise(r => setTimeout(r, 1200));
-                console.warn('⚠️ Firebase offline. Ticket simulado localmente:', ticketData);
+                await new Promise(r => setTimeout(r, 1000));
             }
-
-            // Exibe modal de sucesso
-            showModal(ticketId, categoria, ticketData.solicitanteNome);
+            showModal(ticketId, categoriaEl.value, data.solicitanteNome);
             resetFullForm();
-
-        } catch (err) {
-            console.error('Erro ao salvar ticket:', err);
-            showToast('Erro ao enviar. Verifique a conexão e tente novamente.');
+        } catch(err) {
+            showToast('Erro ao enviar. Tente novamente.');
+            console.error(err);
         } finally {
             btn.disabled = false;
             btn.innerHTML = `<span>Enviar Solicitação</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
