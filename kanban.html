@@ -2,11 +2,29 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Solicitações | Tripla G&G</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Plataforma G&G | Tripla</title>
+    
+    <!-- PWA Meta Tags Base -->
+    <meta name="theme-color" content="#1a56db">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Tripla G&G">
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Touch Drag & Drop Polyfill for Mobile -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/default.css">
+    <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/scroll-behaviour.min.js"></script>
+
+    <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     <script>
         tailwind.config = {
             theme: {
@@ -14,11 +32,11 @@
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
                         brand: {
-                            50: '#f0f6ff', 100: '#e0edff', 200: '#cce0ff',
-                            300: '#a3c7ff', 400: '#75a8ff', 500: '#4783ff',
-                            600: '#1a56db', 700: '#1441a8', 800: '#103380',
-                            900: '#0d275e', 950: '#08173b',
-                        }
+                            50: '#f0f6ff', 100: '#e0edff', 200: '#cce0ff', 300: '#a3c7ff',
+                            400: '#75a8ff', 500: '#4783ff', 600: '#1a56db', 700: '#1441a8',
+                            800: '#103380', 900: '#0d275e', 950: '#08173b',
+                        },
+                        background: '#f8fafc', surface: '#ffffff',
                     }
                 }
             }
@@ -29,1403 +47,638 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-        .kanban-card { cursor: grab; transition: transform 0.1s ease, box-shadow 0.2s ease; }
+        
+        /* Drag & Drop Visual Feedback */
+        .kanban-card { cursor: grab; transition: transform 0.1s ease, box-shadow 0.2s ease; touch-action: none; }
         .kanban-card:active { cursor: grabbing; }
-        .kanban-card.is-dragging { opacity: 0.4; transform: scale(0.95) rotate(2deg); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
-        .kanban-column.drag-over { background-color: #f0f6ff; border-color: #a3c7ff; }
+        .kanban-card.is-dragging { opacity: 0.5; transform: scale(0.95) rotate(2deg); z-index: 50; }
+        .kanban-column.drag-over { background-color: #f0f6ff; border-color: #a3c7ff; border-style: dashed; }
+        
+        /* Views */
+        .view-section { display: none; animation: fadeIn 0.3s ease-out; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .page { display: none; }
-        .page.active { display: flex; flex-direction: column; flex: 1; min-width: 0; overflow: hidden; }
-
-        .nav-link { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #a3c7ff; transition: all 0.15s; font-size: 14px; font-weight: 500; cursor: pointer; }
-        .nav-link:hover { color: white; background: rgba(255,255,255,0.1); }
-        .nav-link.active { background: #1a56db; color: white; box-shadow: 0 4px 14px rgba(26,86,219,0.3); }
-        .nav-link svg { width: 18px; height: 18px; flex-shrink: 0; }
-
-        .stat-card { background: white; border-radius: 16px; padding: 20px; border: 1px solid #e2e8f0; }
-
-        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
-
-        /* Notification Panel */
-        #notifPanel { transform: translateX(100%); transition: transform 0.3s ease; }
-        #notifPanel.open { transform: translateX(0); }
-
-        /* New Ticket Modal */
-        #newTicketModal { display: none; }
-        #newTicketModal.open { display: flex; }
-
-        /* Toast */
-        .toast { position: fixed; bottom: 24px; right: 24px; background: #1e293b; color: white; padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; z-index: 9999; transform: translateY(100px); opacity: 0; transition: all 0.3s ease; pointer-events: none; }
-        .toast.show { transform: translateY(0); opacity: 1; }
-
-        /* Firebase badge */
-        .firebase-live { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #10b981; font-weight: 600; }
-        .firebase-live::before { content: ''; width: 7px; height: 7px; background: #10b981; border-radius: 50%; animation: pulse 1.5s infinite; display: block; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-
-        .sla-ok { color: #10b981; }
-        .sla-warn { color: #f59e0b; }
-        .sla-over { color: #ef4444; }
-
-        .filter-btn.active { background: #1e293b !important; color: white !important; }
-
-        /* Table styles */
-        table { width: 100%; border-collapse: collapse; }
-        th { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        td { padding: 12px; font-size: 13px; border-bottom: 1px solid #f1f5f9; color: #475569; vertical-align: middle; }
-        tr:hover td { background: #f8fafc; }
-        tr:last-child td { border-bottom: none; }
-
-        .progress-bar { height: 6px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
-        .progress-fill { height: 100%; border-radius: 99px; }
+        .auth-bg { background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 24px 24px; background-color: #f8fafc; }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans antialiased h-screen flex overflow-hidden">
+<body class="bg-background text-slate-800 font-sans antialiased h-screen overflow-hidden flex flex-col">
 
-<!-- ===================== SIDEBAR ===================== -->
-<aside class="w-64 bg-brand-950 text-white flex flex-col shadow-xl z-20 flex-shrink-0">
-    <div class="h-20 flex items-center gap-3 px-6 border-b border-brand-800/50">
-        <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
-            <rect width="40" height="40" rx="8" fill="#1a56db"/>
-            <path d="M12 28L20 12L28 28H23L20 22L17 28H12Z" fill="white"/>
-            <path d="M20 22L23 28H28L20 12V22Z" fill="#75a8ff"/>
-        </svg>
-        <div>
-            <span class="text-xl font-extrabold tracking-tight text-white block leading-none">tripla</span>
-            <span class="text-[10px] text-brand-300 font-medium tracking-wider uppercase">Gente & Gestão</span>
-        </div>
-    </div>
-
-    <nav class="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
-        <div class="nav-link" data-page="dashboard">
-            <i data-lucide="layout-dashboard"></i>
-            <span>Dashboard</span>
-        </div>
-        <div class="nav-link active" data-page="kanban">
-            <i data-lucide="kanban-square"></i>
-            <span>Quadro de Solicitações</span>
-        </div>
-        <div class="nav-link" data-page="directory">
-            <i data-lucide="users"></i>
-            <span>Diretório de Pessoas</span>
-        </div>
-        <div class="nav-link" data-page="reports">
-            <i data-lucide="pie-chart"></i>
-            <span>Relatórios e SLAs</span>
-        </div>
-
-        <div class="pt-6 mt-6 border-t border-brand-800/50">
-            <p class="text-[11px] font-semibold text-brand-400 uppercase tracking-wider mb-2 px-3">Configurações</p>
-            <div class="nav-link" data-page="preferences">
-                <i data-lucide="settings"></i>
-                <span>Preferências</span>
+    <!-- ========================================== -->
+    <!-- 1. TELA DE AUTENTICAÇÃO (LOGIN / REGISTRO) -->
+    <!-- ========================================== -->
+    <div id="auth-view" class="fixed inset-0 z-[200] auth-bg flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 p-6 sm:p-8 transform transition-all relative overflow-hidden overflow-y-auto max-h-[95vh]">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-500 to-brand-700"></div>
+            
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-brand-50 text-brand-600 mb-4">
+                    <i data-lucide="lock" class="w-7 h-7 sm:w-8 sm:h-8"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold text-slate-900">Portal G&G</h2>
+                <p class="text-sm text-slate-500 mt-1" id="auth-subtitle">Faça login para gerir as solicitações.</p>
             </div>
-            <div class="nav-link" data-page="employees">
-                <i data-lucide="user-plus"></i>
-                <span>Cadastro de Funcionários</span>
-            </div>
-        </div>
-    </nav>
 
-    <div class="p-4 border-t border-brand-800/50 bg-brand-900/30">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-brand-600 flex items-center justify-center font-bold text-sm">CR</div>
-            <div>
-                <p class="text-sm font-semibold text-white">Carla RH</p>
-                <p class="text-xs text-brand-300">Business Partner</p>
-            </div>
-        </div>
-        <div class="mt-2 firebase-live">Conectado ao Firebase</div>
-    </div>
-</aside>
-
-<!-- ===================== MAIN ===================== -->
-<div class="flex-1 flex flex-col h-screen min-w-0 overflow-hidden relative">
-
-<!-- ===== HEADER (shared) ===== -->
-<header class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 flex-shrink-0">
-    <div>
-        <h1 class="text-xl font-bold text-slate-800" id="pageTitle">Quadro de Solicitações</h1>
-        <p class="text-sm text-slate-500" id="pageSubtitle">Acompanhamento e execução de tickets G&G</p>
-    </div>
-    <div class="flex items-center gap-3">
-        <div class="relative hidden sm:block">
-            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input id="globalSearch" type="text" placeholder="Buscar..." class="pl-9 pr-4 py-2 bg-slate-100 border border-transparent rounded-lg text-sm focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition-all w-56">
-        </div>
-        <button id="notifBtn" class="relative w-10 h-10 rounded-full bg-slate-100 text-slate-600 hover:bg-brand-50 hover:text-brand-600 transition-colors flex items-center justify-center">
-            <i data-lucide="bell" class="w-5 h-5"></i>
-            <span id="notifBadge" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-        </button>
-        <button id="newTicketBtn" class="hidden sm:flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            Novo Ticket
-        </button>
-    </div>
-</header>
-
-<!-- ============================= PAGE: DASHBOARD ============================= -->
-<div id="page-dashboard" class="page overflow-y-auto p-6 gap-6 flex-col">
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="stat-card">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium text-slate-500">Tickets Abertos</span>
-                <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center"><i data-lucide="inbox" class="w-4 h-4 text-blue-600"></i></div>
-            </div>
-            <p class="text-3xl font-extrabold text-slate-800">12</p>
-            <p class="text-xs text-emerald-600 font-medium mt-1">↓ 3 desde semana passada</p>
-        </div>
-        <div class="stat-card">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium text-slate-500">Em Execução</span>
-                <div class="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center"><i data-lucide="zap" class="w-4 h-4 text-amber-600"></i></div>
-            </div>
-            <p class="text-3xl font-extrabold text-slate-800">5</p>
-            <p class="text-xs text-amber-600 font-medium mt-1">2 com SLA crítico</p>
-        </div>
-        <div class="stat-card">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium text-slate-500">Concluídos (mês)</span>
-                <div class="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i></div>
-            </div>
-            <p class="text-3xl font-extrabold text-slate-800">38</p>
-            <p class="text-xs text-emerald-600 font-medium mt-1">↑ 12% vs mês anterior</p>
-        </div>
-        <div class="stat-card">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium text-slate-500">SLA Médio</span>
-                <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center"><i data-lucide="clock" class="w-4 h-4 text-purple-600"></i></div>
-            </div>
-            <p class="text-3xl font-extrabold text-slate-800">18h</p>
-            <p class="text-xs text-emerald-600 font-medium mt-1">Meta: 24h ✓</p>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <!-- Distribuição por área -->
-        <div class="stat-card lg:col-span-2">
-            <h3 class="font-bold text-slate-700 mb-4">Distribuição por Área</h3>
-            <div class="space-y-3">
+            <!-- Formulário Login -->
+            <form id="form-login" class="space-y-4">
                 <div>
-                    <div class="flex justify-between text-sm mb-1"><span class="text-slate-600">Recrutamento & Seleção</span><span class="font-semibold text-slate-800">14</span></div>
-                    <div class="progress-bar"><div class="progress-fill bg-indigo-500" style="width:45%"></div></div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wider">E-mail</label>
+                    <input type="email" id="login-email" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand-500 focus:bg-white outline-none transition-colors">
                 </div>
                 <div>
-                    <div class="flex justify-between text-sm mb-1"><span class="text-slate-600">Depto. Pessoal</span><span class="font-semibold text-slate-800">10</span></div>
-                    <div class="progress-bar"><div class="progress-fill bg-amber-500" style="width:32%"></div></div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wider">Palavra-passe</label>
+                    <input type="password" id="login-pass" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand-500 focus:bg-white outline-none transition-colors">
                 </div>
-                <div>
-                    <div class="flex justify-between text-sm mb-1"><span class="text-slate-600">Treinamento & Desenvolvimento</span><span class="font-semibold text-slate-800">7</span></div>
-                    <div class="progress-bar"><div class="progress-fill bg-fuchsia-500" style="width:22%"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-sm mb-1"><span class="text-slate-600">Comunicados & Clima</span><span class="font-semibold text-slate-800">7</span></div>
-                    <div class="progress-bar"><div class="progress-fill bg-rose-500" style="width:22%"></div></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tickets recentes -->
-        <div class="stat-card">
-            <h3 class="font-bold text-slate-700 mb-4">Atividade Recente</h3>
-            <div class="space-y-3">
-                <div class="flex items-start gap-3">
-                    <div class="w-2 h-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0"></div>
-                    <div><p class="text-xs font-semibold text-slate-700">Novo ticket criado</p><p class="text-xs text-slate-500">Vaga Dev Front-end Sênior</p><p class="text-[11px] text-slate-400">Há 15 min</p></div>
-                </div>
-                <div class="flex items-start gap-3">
-                    <div class="w-2 h-2 rounded-full bg-amber-500 mt-1.5 flex-shrink-0"></div>
-                    <div><p class="text-xs font-semibold text-slate-700">Status alterado</p><p class="text-xs text-slate-500">Workshop de Liderança → Em Execução</p><p class="text-[11px] text-slate-400">Há 2h</p></div>
-                </div>
-                <div class="flex items-start gap-3">
-                    <div class="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0"></div>
-                    <div><p class="text-xs font-semibold text-slate-700">Ticket concluído</p><p class="text-xs text-slate-500">Atestado Médico #8460</p><p class="text-[11px] text-slate-400">Ontem</p></div>
-                </div>
-                <div class="flex items-start gap-3">
-                    <div class="w-2 h-2 rounded-full bg-red-500 mt-1.5 flex-shrink-0"></div>
-                    <div><p class="text-xs font-semibold text-slate-700">SLA em risco</p><p class="text-xs text-slate-500">TriplaPay Comunicado</p><p class="text-[11px] text-slate-400">Vence em 2h</p></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Top responsáveis -->
-    <div class="stat-card">
-        <h3 class="font-bold text-slate-700 mb-4">Desempenho da Equipe G&G</h3>
-        <div class="overflow-x-auto">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Responsável</th>
-                        <th>Em andamento</th>
-                        <th>Concluídos (mês)</th>
-                        <th>SLA Médio</th>
-                        <th>Taxa de Conclusão</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold">CR</div><span class="font-medium text-slate-800">Carla RH</span></div></td>
-                        <td>3</td><td>18</td><td>16h</td>
-                        <td><div class="flex items-center gap-2"><div class="progress-bar flex-1"><div class="progress-fill bg-emerald-500" style="width:92%"></div></div><span class="text-xs font-medium text-emerald-600">92%</span></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 text-xs font-bold">PT</div><span class="font-medium text-slate-800">Pedro T&D</span></div></td>
-                        <td>2</td><td>12</td><td>22h</td>
-                        <td><div class="flex items-center gap-2"><div class="progress-bar flex-1"><div class="progress-fill bg-amber-500" style="width:78%"></div></div><span class="text-xs font-medium text-amber-600">78%</span></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-rose-100 flex items-center justify-center text-rose-700 text-xs font-bold">AS</div><span class="font-medium text-slate-800">Ana DP</span></div></td>
-                        <td>1</td><td>8</td><td>19h</td>
-                        <td><div class="flex items-center gap-2"><div class="progress-bar flex-1"><div class="progress-fill bg-emerald-500" style="width:85%"></div></div><span class="text-xs font-medium text-emerald-600">85%</span></div></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<!-- ============================= PAGE: KANBAN ============================= -->
-<div id="page-kanban" class="page active">
-    <!-- Filters Bar -->
-    <div class="bg-white border-b border-slate-200 px-6 py-3 flex items-center gap-2 overflow-x-auto flex-shrink-0">
-        <span class="text-sm font-semibold text-slate-500 mr-2 flex-shrink-0">Filtrar:</span>
-        <button class="filter-btn active px-4 py-1.5 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="all">Todos</button>
-        <button class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="rs">Recrutamento</button>
-        <button class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="td">Treinamento</button>
-        <button class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="dp">Depto. Pessoal</button>
-        <button class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="clima">Comunicados & Clima</button>
-    </div>
-
-    <!-- Board -->
-    <div class="flex-1 overflow-x-auto overflow-y-hidden">
-        <div class="h-full flex gap-5 p-5 min-w-max items-start">
-
-            <!-- Column: Novas -->
-            <div class="kanban-column flex flex-col w-80 max-h-full bg-slate-100 rounded-2xl border border-slate-200/60 transition-colors duration-200" data-status="novas">
-                <div class="p-4 flex items-center justify-between border-b border-slate-200/60">
-                    <div class="flex items-center gap-2">
-                        <div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
-                        <h2 class="font-bold text-slate-700 text-sm">Novas (Triagem)</h2>
-                    </div>
-                    <span class="col-count bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">3</span>
-                </div>
-                <div class="p-3 flex-1 overflow-y-auto space-y-3 column-content" id="col-novas">
-                    <div class="kanban-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand-300" draggable="true" data-type="clima" data-id="8492" onclick="openTicketModal('8492')">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="badge bg-rose-50 text-rose-600">Comunicado</span>
-                            <span class="text-xs text-slate-400 font-mono">#8492</span>
-                        </div>
-                        <h3 class="font-semibold text-slate-800 text-sm mb-1 leading-snug">Disparo de Lançamento: Novo Produto TriplaPay</h3>
-                        <p class="text-xs text-slate-500 mb-3 line-clamp-2">Solicitação de disparo para toda a empresa avisando sobre o lançamento. Precisa de arte.</p>
-                        <div class="flex items-center justify-between mt-auto">
-                            <div class="flex items-center gap-2">
-                                <div class="w-6 h-6 rounded-full bg-brand-100 flex items-center justify-center text-[10px] font-bold text-brand-700">MK</div>
-                                <span class="text-xs text-slate-500">Hoje</span>
-                            </div>
-                            <span class="flex items-center gap-1 text-[10px] font-semibold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
-                                <i data-lucide="clock" class="w-3 h-3"></i> SLA: 2h restantes
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="kanban-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand-300" draggable="true" data-type="rs" data-id="8493" onclick="openTicketModal('8493')">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="badge bg-indigo-50 text-indigo-600">Recrutamento</span>
-                            <span class="text-xs text-slate-400 font-mono">#8493</span>
-                        </div>
-                        <h3 class="font-semibold text-slate-800 text-sm mb-1 leading-snug">Vaga: Desenvolvedor Front-end Sênior</h3>
-                        <p class="text-xs text-slate-500 mb-3 line-clamp-2">Aumento de quadro. Orçamento aprovado. Modelo remoto.</p>
-                        <div class="flex items-center justify-between mt-auto">
-                            <div class="flex items-center gap-2">
-                                <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600">TI</div>
-                                <span class="text-xs text-slate-500">Ontem</span>
-                            </div>
-                            <i data-lucide="paperclip" class="w-3.5 h-3.5 text-slate-400"></i>
-                        </div>
-                    </div>
-
-                    <div class="kanban-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand-300" draggable="true" data-type="dp" data-id="8495" onclick="openTicketModal('8495')">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="badge bg-amber-50 text-amber-600">Depto. Pessoal</span>
-                            <span class="text-xs text-slate-400 font-mono">#8495</span>
-                        </div>
-                        <h3 class="font-semibold text-slate-800 text-sm mb-1 leading-snug">Alteração de Período de Férias</h3>
-                        <p class="text-xs text-slate-500 mb-3 line-clamp-2">Colaborador João Silva solicitou alteração para Dezembro.</p>
-                        <div class="flex items-center justify-between mt-auto">
-                            <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600">VD</div>
-                            <span class="text-xs text-slate-500">Hoje</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Column: Em Execução -->
-            <div class="kanban-column flex flex-col w-80 max-h-full bg-slate-100 rounded-2xl border border-slate-200/60 transition-colors duration-200" data-status="andamento">
-                <div class="p-4 flex items-center justify-between border-b border-slate-200/60">
-                    <div class="flex items-center gap-2">
-                        <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
-                        <h2 class="font-bold text-slate-700 text-sm">Em Execução</h2>
-                    </div>
-                    <span class="col-count bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">1</span>
-                </div>
-                <div class="p-3 flex-1 overflow-y-auto space-y-3 column-content" id="col-andamento">
-                    <div class="kanban-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 border-l-4 border-l-amber-400 hover:shadow-md" draggable="true" data-type="td" data-id="8480" onclick="openTicketModal('8480')">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="badge bg-fuchsia-50 text-fuchsia-600">Treinamento</span>
-                            <span class="text-xs text-slate-400 font-mono">#8480</span>
-                        </div>
-                        <h3 class="font-semibold text-slate-800 text-sm mb-1 leading-snug">Workshop de Liderança In-Company</h3>
-                        <p class="text-xs text-slate-500 mb-2 line-clamp-2">Cotação com fornecedores de treinamento para 15 líderes.</p>
-                        <div class="mb-3">
-                            <div class="flex justify-between text-[10px] text-slate-500 mb-1"><span>Progresso</span><span>50%</span></div>
-                            <div class="progress-bar"><div class="progress-fill bg-amber-400" style="width:50%"></div></div>
-                        </div>
-                        <div class="flex items-center justify-between mt-auto">
-                            <div class="w-6 h-6 rounded-full bg-brand-100 flex items-center justify-center text-[10px] font-bold text-brand-700">CR</div>
-                            <span class="text-xs text-slate-500">Há 2 dias</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Column: Aguardando -->
-            <div class="kanban-column flex flex-col w-80 max-h-full bg-slate-100 rounded-2xl border border-slate-200/60 transition-colors duration-200" data-status="aguardando">
-                <div class="p-4 flex items-center justify-between border-b border-slate-200/60">
-                    <div class="flex items-center gap-2">
-                        <div class="w-2.5 h-2.5 rounded-full bg-purple-500"></div>
-                        <h2 class="font-bold text-slate-700 text-sm">Aguardando Terceiros</h2>
-                    </div>
-                    <span class="col-count bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">1</span>
-                </div>
-                <div class="p-3 flex-1 overflow-y-auto space-y-3 column-content" id="col-aguardando">
-                    <div class="kanban-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 opacity-80 hover:opacity-100 transition-opacity" draggable="true" data-type="dp" data-id="8475" onclick="openTicketModal('8475')">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="badge bg-amber-50 text-amber-600">Depto. Pessoal</span>
-                            <span class="text-xs text-slate-400 font-mono">#8475</span>
-                        </div>
-                        <h3 class="font-semibold text-slate-800 text-sm mb-1 leading-snug">Desligamento: Analista Financeiro</h3>
-                        <div class="flex items-center gap-1 text-[10px] text-purple-600 bg-purple-50 px-2 py-1 rounded mb-3 w-fit">
-                            <i data-lucide="alert-circle" class="w-3 h-3"></i> Aguardando Exame Demissional
-                        </div>
-                        <div class="flex items-center justify-between pt-2 border-t border-slate-100">
-                            <span class="text-xs text-slate-500">Resp: RH Legal</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Column: Concluído -->
-            <div class="kanban-column flex flex-col w-80 max-h-full bg-slate-100/50 rounded-2xl border border-slate-200/60 border-dashed transition-colors duration-200" data-status="concluido">
-                <div class="p-4 flex items-center justify-between border-b border-slate-200/60">
-                    <div class="flex items-center gap-2">
-                        <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
-                        <h2 class="font-bold text-slate-700 text-sm">Concluídas (7 dias)</h2>
-                    </div>
-                    <span class="col-count bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">1</span>
-                </div>
-                <div class="p-3 flex-1 overflow-y-auto space-y-3 column-content" id="col-concluido">
-                    <div class="kanban-card bg-slate-50 p-4 rounded-xl shadow-sm border border-slate-200" draggable="true" data-type="dp" data-id="8460">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="badge bg-slate-200 text-slate-500 line-through">Depto. Pessoal</span>
-                            <span class="text-xs text-slate-400 font-mono">#8460</span>
-                        </div>
-                        <h3 class="font-semibold text-slate-600 text-sm mb-1 line-through">Atestado Médico (3 dias)</h3>
-                        <div class="flex items-center gap-1 text-[10px] text-emerald-600 font-medium mt-3">
-                            <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Finalizado ontem
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</div>
-
-<!-- ============================= PAGE: DIRECTORY ============================= -->
-<div id="page-directory" class="page overflow-y-auto p-6">
-    <div class="flex items-center justify-between mb-5">
-        <div>
-            <h2 class="text-lg font-bold text-slate-800">Diretório de Pessoas</h2>
-            <p class="text-sm text-slate-500">24 colaboradores ativos</p>
-        </div>
-        <div class="flex gap-2">
-            <select class="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-brand-200">
-                <option>Todos os departamentos</option>
-                <option>Tecnologia</option>
-                <option>Marketing</option>
-                <option>Financeiro</option>
-                <option>RH</option>
-            </select>
-            <button onclick="showPage('employees')" class="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
-                <i data-lucide="user-plus" class="w-4 h-4"></i> Cadastrar
-            </button>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="peopleGrid">
-        <!-- People cards will be injected here -->
-    </div>
-</div>
-
-<!-- ============================= PAGE: REPORTS ============================= -->
-<div id="page-reports" class="page overflow-y-auto p-6 flex-col gap-4">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div class="stat-card">
-            <h3 class="font-bold text-slate-700 mb-1">SLA Global</h3>
-            <p class="text-4xl font-extrabold text-emerald-600">94%</p>
-            <p class="text-sm text-slate-500 mt-1">Tickets dentro do prazo este mês</p>
-        </div>
-        <div class="stat-card">
-            <h3 class="font-bold text-slate-700 mb-1">Ticket mais rápido</h3>
-            <p class="text-4xl font-extrabold text-brand-600">1h20</p>
-            <p class="text-sm text-slate-500 mt-1">Atestado Médico #8460</p>
-        </div>
-        <div class="stat-card">
-            <h3 class="font-bold text-slate-700 mb-1">Ticket mais lento</h3>
-            <p class="text-4xl font-extrabold text-red-500">72h</p>
-            <p class="text-sm text-slate-500 mt-1">Vaga Sênior Back-end #8410</p>
-        </div>
-    </div>
-
-    <div class="stat-card">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-slate-700">SLA por Categoria</h3>
-            <select class="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white outline-none">
-                <option>Maio 2025</option>
-                <option>Abril 2025</option>
-            </select>
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Categoria</th>
-                    <th>Meta (h)</th>
-                    <th>Média Real (h)</th>
-                    <th>Tickets</th>
-                    <th>Dentro do Prazo</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><span class="badge bg-rose-50 text-rose-600">Comunicado</span></td>
-                    <td>24h</td><td>18h</td><td>8</td>
-                    <td>100%</td>
-                    <td><span class="badge bg-emerald-50 text-emerald-600">✓ OK</span></td>
-                </tr>
-                <tr>
-                    <td><span class="badge bg-indigo-50 text-indigo-600">Recrutamento</span></td>
-                    <td>72h</td><td>58h</td><td>14</td>
-                    <td>86%</td>
-                    <td><span class="badge bg-emerald-50 text-emerald-600">✓ OK</span></td>
-                </tr>
-                <tr>
-                    <td><span class="badge bg-fuchsia-50 text-fuchsia-600">Treinamento</span></td>
-                    <td>48h</td><td>51h</td><td>7</td>
-                    <td>71%</td>
-                    <td><span class="badge bg-red-50 text-red-600">⚠ Alerta</span></td>
-                </tr>
-                <tr>
-                    <td><span class="badge bg-amber-50 text-amber-600">Depto. Pessoal</span></td>
-                    <td>48h</td><td>32h</td><td>10</td>
-                    <td>100%</td>
-                    <td><span class="badge bg-emerald-50 text-emerald-600">✓ OK</span></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div class="stat-card">
-        <h3 class="font-bold text-slate-700 mb-4">Histórico de Tickets (últimos 30 dias)</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th><th>Título</th><th>Categoria</th><th>Responsável</th><th>Criado em</th><th>SLA</th><th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="font-mono text-slate-400">#8492</td>
-                    <td class="font-medium text-slate-700">Disparo TriplaPay</td>
-                    <td><span class="badge bg-rose-50 text-rose-600">Comunicado</span></td>
-                    <td>Carla RH</td>
-                    <td>Hoje</td>
-                    <td class="sla-over font-semibold">Vence em 2h</td>
-                    <td><span class="badge bg-blue-50 text-blue-600">Triagem</span></td>
-                </tr>
-                <tr>
-                    <td class="font-mono text-slate-400">#8480</td>
-                    <td class="font-medium text-slate-700">Workshop Liderança</td>
-                    <td><span class="badge bg-fuchsia-50 text-fuchsia-600">Treinamento</span></td>
-                    <td>Carla RH</td>
-                    <td>Há 2 dias</td>
-                    <td class="sla-warn font-semibold">28h restantes</td>
-                    <td><span class="badge bg-amber-50 text-amber-600">Em Execução</span></td>
-                </tr>
-                <tr>
-                    <td class="font-mono text-slate-400">#8475</td>
-                    <td class="font-medium text-slate-700">Desligamento Analista</td>
-                    <td><span class="badge bg-amber-50 text-amber-600">Depto. Pessoal</span></td>
-                    <td>Ana DP</td>
-                    <td>Há 3 dias</td>
-                    <td class="sla-ok font-semibold">OK</td>
-                    <td><span class="badge bg-purple-50 text-purple-600">Aguardando</span></td>
-                </tr>
-                <tr>
-                    <td class="font-mono text-slate-400">#8460</td>
-                    <td class="font-medium text-slate-700">Atestado Médico 3 dias</td>
-                    <td><span class="badge bg-amber-50 text-amber-600">Depto. Pessoal</span></td>
-                    <td>Ana DP</td>
-                    <td>Ontem</td>
-                    <td class="sla-ok font-semibold">1h20 (meta: 48h)</td>
-                    <td><span class="badge bg-emerald-50 text-emerald-600">Concluído</span></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- ============================= PAGE: PREFERENCES ============================= -->
-<div id="page-preferences" class="page overflow-y-auto p-6">
-    <div class="max-w-2xl mx-auto space-y-6">
-
-        <div class="stat-card">
-            <h3 class="font-bold text-slate-700 mb-4">Configurações do Firebase</h3>
-            <p class="text-sm text-slate-500 mb-4">Configure suas credenciais do Firebase para sincronização em tempo real. Após preencher, clique em Salvar e recarregue a página.</p>
-            <div class="space-y-3">
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">API Key</label>
-                    <input id="fb-apiKey" type="text" placeholder="AIzaSy..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Auth Domain</label>
-                    <input id="fb-authDomain" type="text" placeholder="projeto.firebaseapp.com" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Project ID</label>
-                    <input id="fb-projectId" type="text" placeholder="meu-projeto-123" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Storage Bucket</label>
-                    <input id="fb-storageBucket" type="text" placeholder="projeto.appspot.com" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Messaging Sender ID</label>
-                    <input id="fb-messagingSenderId" type="text" placeholder="123456789" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">App ID</label>
-                    <input id="fb-appId" type="text" placeholder="1:123:web:abc" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                </div>
-            </div>
-            <div class="flex gap-3 mt-5">
-                <button onclick="saveFirebaseConfig()" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors">Salvar Credenciais</button>
-                <button onclick="testFirebaseConnection()" class="border border-slate-200 hover:bg-slate-50 text-slate-700 px-5 py-2 rounded-lg text-sm font-semibold transition-colors">Testar Conexão</button>
-            </div>
-            <div id="fb-status" class="mt-3 text-sm hidden"></div>
-        </div>
-
-        <div class="stat-card">
-            <h3 class="font-bold text-slate-700 mb-4">SLAs por Categoria</h3>
-            <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-slate-700">Comunicados & Clima</span>
-                    <div class="flex items-center gap-2">
-                        <input type="number" value="24" class="w-20 border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-center outline-none focus:ring-2 focus:ring-brand-200">
-                        <span class="text-xs text-slate-500">horas</span>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-slate-700">Recrutamento & Seleção</span>
-                    <div class="flex items-center gap-2">
-                        <input type="number" value="72" class="w-20 border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-center outline-none focus:ring-2 focus:ring-brand-200">
-                        <span class="text-xs text-slate-500">horas</span>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-slate-700">Treinamento & Desenvolvimento</span>
-                    <div class="flex items-center gap-2">
-                        <input type="number" value="48" class="w-20 border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-center outline-none focus:ring-2 focus:ring-brand-200">
-                        <span class="text-xs text-slate-500">horas</span>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-slate-700">Departamento Pessoal</span>
-                    <div class="flex items-center gap-2">
-                        <input type="number" value="48" class="w-20 border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-center outline-none focus:ring-2 focus:ring-brand-200">
-                        <span class="text-xs text-slate-500">horas</span>
-                    </div>
-                </div>
-            </div>
-            <button onclick="showToast('SLAs salvos com sucesso!')" class="mt-4 bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors">Salvar SLAs</button>
-        </div>
-
-        <div class="stat-card">
-            <h3 class="font-bold text-slate-700 mb-4">Notificações</h3>
-            <div class="space-y-3">
-                <label class="flex items-center justify-between cursor-pointer">
-                    <span class="text-sm text-slate-700">Notificar quando SLA estiver em risco</span>
-                    <input type="checkbox" checked class="w-4 h-4 accent-brand-600">
-                </label>
-                <label class="flex items-center justify-between cursor-pointer">
-                    <span class="text-sm text-slate-700">Notificar novo ticket criado</span>
-                    <input type="checkbox" checked class="w-4 h-4 accent-brand-600">
-                </label>
-                <label class="flex items-center justify-between cursor-pointer">
-                    <span class="text-sm text-slate-700">Notificar quando ticket for concluído</span>
-                    <input type="checkbox" class="w-4 h-4 accent-brand-600">
-                </label>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ============================= PAGE: EMPLOYEES ============================= -->
-<div id="page-employees" class="page overflow-y-auto p-6">
-    <div class="max-w-2xl mx-auto">
-        <div class="stat-card">
-            <h3 class="font-bold text-slate-700 mb-5 text-lg">Cadastro de Funcionário</h3>
-            <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Nome Completo *</label>
-                        <input id="emp-nome" type="text" placeholder="João da Silva" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">CPF *</label>
-                        <input id="emp-cpf" type="text" placeholder="000.000.000-00" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">E-mail *</label>
-                        <input id="emp-email" type="email" placeholder="joao@tripla.com.br" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Telefone</label>
-                        <input id="emp-tel" type="tel" placeholder="(11) 99999-0000" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Cargo *</label>
-                        <input id="emp-cargo" type="text" placeholder="Analista de RH Pleno" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Departamento *</label>
-                        <select id="emp-depto" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500 bg-white">
-                            <option value="">Selecione...</option>
-                            <option>Tecnologia</option>
-                            <option>Marketing</option>
-                            <option>Financeiro</option>
-                            <option>Recursos Humanos</option>
-                            <option>Comercial</option>
-                            <option>Operações</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Data de Admissão *</label>
-                        <input id="emp-admissao" type="date" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Regime de Trabalho</label>
-                        <select id="emp-regime" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500 bg-white">
-                            <option>CLT</option>
-                            <option>PJ</option>
-                            <option>Estágio</option>
-                            <option>Temporário</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Salário (R$)</label>
-                        <input id="emp-salario" type="number" placeholder="5000" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Gestor Direto</label>
-                        <input id="emp-gestor" type="text" placeholder="Nome do gestor" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
-                    </div>
-                </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Modalidade</label>
-                    <div class="flex gap-4 mt-1">
-                        <label class="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-                            <input type="radio" name="modalidade" value="presencial" checked class="accent-brand-600"> Presencial
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-                            <input type="radio" name="modalidade" value="hibrido" class="accent-brand-600"> Híbrido
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-                            <input type="radio" name="modalidade" value="remoto" class="accent-brand-600"> Remoto
-                        </label>
-                    </div>
-                </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Observações</label>
-                    <textarea id="emp-obs" rows="3" placeholder="Informações adicionais..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500 resize-none"></textarea>
-                </div>
-            </div>
-            <div class="flex gap-3 mt-6">
-                <button onclick="saveEmployee()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
-                    <i data-lucide="save" class="w-4 h-4"></i> Salvar Funcionário
+                <button type="submit" id="btn-login" class="w-full py-3.5 px-4 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl transition-all shadow-md mt-2 flex justify-center items-center gap-2">
+                    Entrar <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </button>
-                <button onclick="clearEmployeeForm()" class="border border-slate-200 hover:bg-slate-50 text-slate-700 px-5 py-2 rounded-lg text-sm font-semibold transition-colors">Limpar</button>
-            </div>
-        </div>
-    </div>
-</div>
+                <p class="text-center text-sm text-slate-500 mt-4">Não tem acesso? <button type="button" onclick="toggleAuthMode('register')" class="text-brand-600 font-semibold hover:underline">Solicite o seu cadastro</button></p>
+            </form>
 
-</div><!-- end main -->
-
-<!-- ===================== NOTIFICATION PANEL ===================== -->
-<div id="notifOverlay" class="fixed inset-0 z-40 hidden" onclick="closeNotifPanel()"></div>
-<div id="notifPanel" class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 flex flex-col border-l border-slate-200">
-    <div class="p-5 border-b border-slate-200 flex items-center justify-between">
-        <h3 class="font-bold text-slate-800">Notificações</h3>
-        <button onclick="closeNotifPanel()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
-    </div>
-    <div class="flex-1 overflow-y-auto p-4 space-y-3">
-        <div class="p-3 bg-red-50 border border-red-100 rounded-xl">
-            <div class="flex items-start gap-3">
-                <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0"><i data-lucide="clock" class="w-4 h-4 text-red-600"></i></div>
+            <!-- Formulário Registro (Oculto) -->
+            <form id="form-register" class="space-y-4 hidden">
                 <div>
-                    <p class="text-sm font-semibold text-slate-800">SLA em Risco!</p>
-                    <p class="text-xs text-slate-600 mt-0.5">Ticket #8492 (TriplaPay) vence em 2 horas. Ação imediata necessária.</p>
-                    <p class="text-[11px] text-slate-400 mt-1">Agora mesmo</p>
+                    <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wider">Nome Completo</label>
+                    <input type="text" id="reg-nome" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand-500 focus:bg-white outline-none transition-colors">
                 </div>
-            </div>
-        </div>
-        <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl">
-            <div class="flex items-start gap-3">
-                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0"><i data-lucide="plus-circle" class="w-4 h-4 text-blue-600"></i></div>
                 <div>
-                    <p class="text-sm font-semibold text-slate-800">Novo Ticket Criado</p>
-                    <p class="text-xs text-slate-600 mt-0.5">Vaga Dev Front-end Sênior (#8493) foi aberta por Ana/TI.</p>
-                    <p class="text-[11px] text-slate-400 mt-1">15 min atrás</p>
-                </div>
-            </div>
-        </div>
-        <div class="p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
-            <div class="flex items-start gap-3">
-                <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i></div>
-                <div>
-                    <p class="text-sm font-semibold text-slate-800">Ticket Concluído</p>
-                    <p class="text-xs text-slate-600 mt-0.5">Atestado Médico #8460 foi finalizado por Ana DP.</p>
-                    <p class="text-[11px] text-slate-400 mt-1">Ontem, 16:30</p>
-                </div>
-            </div>
-        </div>
-        <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-            <div class="flex items-start gap-3">
-                <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0"><i data-lucide="arrow-right" class="w-4 h-4 text-slate-600"></i></div>
-                <div>
-                    <p class="text-sm font-semibold text-slate-800">Status Atualizado</p>
-                    <p class="text-xs text-slate-600 mt-0.5">Workshop Liderança movido para "Em Execução" por Carla RH.</p>
-                    <p class="text-[11px] text-slate-400 mt-1">Há 2 horas</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="p-4 border-t border-slate-200">
-        <button onclick="closeNotifPanel(); showToast('Todas as notificações marcadas como lidas.')" class="w-full text-sm text-brand-600 font-semibold hover:text-brand-700 transition-colors">Marcar todas como lidas</button>
-    </div>
-</div>
-
-<!-- ===================== TICKET DETAIL MODAL ===================== -->
-<div id="ticketModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex justify-end transition-opacity duration-300 opacity-0">
-    <div id="modalContent" class="w-full max-w-xl bg-white h-full shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
-            <div class="flex items-center gap-3">
-                <span id="modalId" class="text-xs font-mono text-slate-500 bg-white px-2 py-1 rounded border border-slate-200"></span>
-                <span id="modalBadge" class="badge"></span>
-            </div>
-            <div class="flex items-center gap-2">
-                <button onclick="closeTicketModal()" class="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-        </div>
-
-        <div class="flex-1 overflow-y-auto p-6">
-            <h2 id="modalTitle" class="text-2xl font-bold text-slate-900 mb-6"></h2>
-
-            <div class="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-4">
-                <div>
-                    <p class="text-xs text-slate-500 font-medium mb-1">Status Atual</p>
-                    <select id="modalStatus" onchange="changeTicketStatus(this.value)" class="text-sm font-semibold bg-transparent outline-none cursor-pointer text-slate-700">
-                        <option value="novas">📥 Novas (Triagem)</option>
-                        <option value="andamento">⚙️ Em Execução</option>
-                        <option value="aguardando">⏳ Aguardando Terceiros</option>
-                        <option value="concluido">✅ Concluído</option>
+                    <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wider">Sua Área (G&G)</label>
+                    <select id="reg-area" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand-500 focus:bg-white outline-none transition-colors appearance-none">
+                        <option value="" disabled selected>Selecione a sua especialidade...</option>
+                        <option value="Recrutamento & Seleção">Recrutamento & Seleção (R&S)</option>
+                        <option value="Treinamento & Desenv.">Treinamento & Desenvolvimento (T&D)</option>
+                        <option value="Departamento Pessoal">Departamento Pessoal (DP)</option>
+                        <option value="Clima & Cultura">Clima & Cultura / Endomarketing</option>
+                        <option value="Business Partner">Business Partner (Generalista)</option>
                     </select>
                 </div>
                 <div>
-                    <p class="text-xs text-slate-500 font-medium mb-1">Responsável G&G</p>
-                    <select class="text-sm font-semibold bg-transparent outline-none cursor-pointer text-brand-600">
-                        <option>Carla RH</option>
-                        <option>Pedro T&D</option>
-                        <option>Ana DP</option>
-                    </select>
+                    <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wider">E-mail Corporativo</label>
+                    <input type="email" id="reg-email" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand-500 focus:bg-white outline-none transition-colors">
                 </div>
-            </div>
-
-            <div id="modalBody" class="space-y-5"></div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wider">Criar Palavra-passe</label>
+                    <input type="password" id="reg-pass" required minlength="6" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand-500 focus:bg-white outline-none transition-colors">
+                </div>
+                <div class="p-3 bg-amber-50 border border-amber-100 rounded-lg text-xs text-amber-800 flex gap-2 items-start mt-2">
+                    <i data-lucide="info" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
+                    <p>O seu perfil ficará pendente de aprovação por um Administrador.</p>
+                </div>
+                <button type="submit" id="btn-register" class="w-full py-3.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl transition-all shadow-md mt-2 flex justify-center items-center gap-2">
+                    Solicitar Acesso
+                </button>
+                <p class="text-center text-sm text-slate-500 mt-4">Já tem conta? <button type="button" onclick="toggleAuthMode('login')" class="text-brand-600 font-semibold hover:underline">Faça Login</button></p>
+            </form>
         </div>
+    </div>
 
-        <div class="p-4 border-t border-slate-200 bg-white flex gap-3 justify-end">
-            <button onclick="rejectTicket()" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Rejeitar</button>
-            <button onclick="saveTicket()" class="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition-colors flex items-center gap-2">
-                <i data-lucide="check" class="w-4 h-4"></i> Salvar
+    <!-- ========================================== -->
+    <!-- 2. TELA DE PENDENTE (AGUARDANDO APROVAÇÃO) -->
+    <!-- ========================================== -->
+    <div id="pending-view" class="fixed inset-0 z-[150] bg-slate-50 flex items-center justify-center p-4 hidden">
+        <div class="text-center max-w-md bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
+            <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-amber-100 text-amber-500 mb-6 relative">
+                <i data-lucide="clock" class="w-12 h-12"></i>
+                <div class="absolute -bottom-2 -right-2 bg-white rounded-full p-1 shadow-sm"><i data-lucide="shield" class="w-6 h-6 text-slate-400"></i></div>
+            </div>
+            <h2 class="text-2xl font-extrabold text-slate-900 mb-3">Conta em Análise</h2>
+            <p class="text-slate-600 mb-8 leading-relaxed text-sm">Olá! O seu registo foi concluído, mas o sistema exige permissão de acesso. Aguarde enquanto um Administrador aprova o seu perfil.</p>
+            <div class="w-full bg-slate-100 rounded-full h-1.5 mb-8 overflow-hidden"><div class="bg-amber-400 h-full w-full animate-pulse"></div></div>
+            <button onclick="window.sairDaConta()" class="text-slate-500 hover:text-slate-800 text-sm font-semibold flex items-center justify-center gap-2 mx-auto">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Sair da conta
             </button>
         </div>
     </div>
-</div>
 
-<!-- ===================== NEW TICKET MODAL ===================== -->
-<div id="newTicketModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm items-end sm:items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-            <h3 class="font-bold text-slate-800">Novo Ticket</h3>
-            <button onclick="closeNewTicketModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
-        </div>
-        <div class="flex-1 overflow-y-auto p-6 space-y-4">
-            <div>
-                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Título *</label>
-                <input id="nt-titulo" type="text" placeholder="Descreva brevemente a solicitação" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
+    <!-- ========================================== -->
+    <!-- 3. APLICAÇÃO PRINCIPAL (APP)               -->
+    <!-- ========================================== -->
+    <div id="app-view" class="flex h-screen w-full hidden overflow-hidden relative">
+        
+        <!-- Overlay escuro para mobile (quando o menu está aberto) -->
+        <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 z-30 hidden md:hidden transition-opacity"></div>
+
+        <!-- Sidebar Lateral Responsiva -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 w-64 bg-brand-950 text-white flex flex-col shadow-2xl z-40 transition-transform duration-300 flex-shrink-0">
+            <div class="h-16 md:h-20 flex items-center justify-between px-6 border-b border-brand-800/50">
+                <div class="flex items-center gap-3">
+                    <svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="40" height="40" rx="8" fill="#1a56db"/><path d="M12 28L20 12L28 28H23L20 22L17 28H12Z" fill="white"/><path d="M20 22L23 28H28L20 12V22Z" fill="#75a8ff"/>
+                    </svg>
+                    <div><span class="text-lg font-extrabold tracking-tight block leading-none">tripla</span><span class="text-[9px] text-brand-300 font-medium tracking-wider uppercase">Gente & Gestão</span></div>
+                </div>
+                <!-- Botão fechar apenas no mobile -->
+                <button onclick="toggleSidebar()" class="md:hidden text-brand-300 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Categoria *</label>
-                    <select id="nt-tipo" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500 bg-white">
-                        <option value="">Selecione...</option>
-                        <option value="clima">Comunicado & Clima</option>
-                        <option value="rs">Recrutamento & Seleção</option>
-                        <option value="td">Treinamento & Desenvolvimento</option>
-                        <option value="dp">Departamento Pessoal</option>
-                    </select>
+
+            <nav class="flex-1 py-4 px-3 space-y-1 overflow-y-auto" id="main-nav">
+                <button data-target="dashboard" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-brand-200 hover:text-white hover:bg-brand-800 transition-colors">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i><span class="font-medium text-sm">Dashboard</span>
+                </button>
+                <button data-target="kanban" class="nav-btn active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-brand-600 text-white shadow-md shadow-brand-900/20 transition-colors">
+                    <i data-lucide="kanban-square" class="w-5 h-5"></i><span class="font-medium text-sm">Kanban</span>
+                </button>
+                <button data-target="diretorio" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-brand-200 hover:text-white hover:bg-brand-800 transition-colors">
+                    <i data-lucide="users" class="w-5 h-5"></i><span class="font-medium text-sm">Diretório / RD</span>
+                </button>
+                
+                <!-- Gestão de Acessos -->
+                <button data-target="acessos" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-brand-200 hover:text-white hover:bg-brand-800 transition-colors">
+                    <div class="flex items-center gap-3"><i data-lucide="shield-check" class="w-5 h-5"></i><span class="font-medium text-sm">Acessos G&G</span></div>
+                    <span id="badge-pendentes" class="hidden bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
+                </button>
+                
+                <div class="pt-6 mt-4 border-t border-brand-800/50 px-3">
+                    <a href="index.html" target="_blank" class="flex items-center gap-3 py-2 rounded-lg text-brand-200 hover:text-white transition-colors">
+                        <i data-lucide="external-link" class="w-4 h-4"></i><span class="font-medium text-sm">Portal G&G Externo</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="p-4 border-t border-brand-800/50 bg-brand-900/30 flex items-center justify-between">
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <div class="w-9 h-9 flex-shrink-0 rounded-full border border-brand-500 bg-brand-700 flex items-center justify-center font-bold text-white text-xs" id="user-initials">UN</div>
+                    <div class="truncate">
+                        <p class="text-sm font-semibold text-white truncate" id="user-name">A carregar...</p>
+                        <p class="text-[10px] text-brand-300 truncate" id="user-area">Gente & Gestão</p>
+                    </div>
+                </div>
+                <button onclick="window.sairDaConta()" class="text-brand-400 hover:text-white p-1 rounded transition-colors" title="Sair"><i data-lucide="log-out" class="w-4 h-4"></i></button>
+            </div>
+        </aside>
+
+        <!-- Container Principal de Views -->
+        <main class="flex-1 flex flex-col h-screen min-w-0 overflow-hidden relative w-full">
+            <!-- Header Mobile e Título -->
+            <header class="h-16 md:h-20 bg-white border-b border-slate-200 flex items-center px-4 md:px-6 z-10 flex-shrink-0 gap-4">
+                <button onclick="toggleSidebar()" class="md:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                <div class="flex-1">
+                    <h1 id="header-title" class="text-lg md:text-xl font-bold text-slate-800 truncate">Quadro Kanban</h1>
+                    <p id="header-subtitle" class="text-xs md:text-sm text-slate-500 hidden sm:block truncate">Acompanhamento e execução de tickets</p>
+                </div>
+            </header>
+
+            <!-- VIEW: KANBAN -->
+            <div id="view-kanban" class="view-section active flex-1 flex flex-col h-full overflow-hidden">
+                <!-- Filtros Scrolláveis Mobile -->
+                <div class="bg-white border-b border-slate-200 px-4 md:px-6 py-2.5 flex items-center gap-2 overflow-x-auto flex-shrink-0 hide-scrollbar" style="scrollbar-width: none;">
+                    <button class="filter-btn bg-slate-800 text-white px-4 py-1.5 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap" data-filter="all">Todos</button>
+                    <button class="filter-btn bg-slate-100 text-slate-600 hover:bg-slate-200 px-4 py-1.5 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap" data-filter="rs">R&S</button>
+                    <button class="filter-btn bg-slate-100 text-slate-600 hover:bg-slate-200 px-4 py-1.5 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap" data-filter="td">T&D</button>
+                    <button class="filter-btn bg-slate-100 text-slate-600 hover:bg-slate-200 px-4 py-1.5 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap" data-filter="dp">DP</button>
+                    <button class="filter-btn bg-slate-100 text-slate-600 hover:bg-slate-200 px-4 py-1.5 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap" data-filter="clima">Comunicados</button>
+                </div>
+
+                <!-- Quadro -->
+                <div class="flex-1 overflow-x-auto overflow-y-hidden p-4 md:p-6 bg-slate-50">
+                    <div class="h-full flex gap-4 md:gap-6 min-w-max items-start">
+                        <!-- Coluna 1 -->
+                        <div class="kanban-column flex flex-col w-72 md:w-80 max-h-full bg-slate-100/80 rounded-xl border border-slate-200" id="col-novas">
+                            <div class="p-3 md:p-4 flex justify-between items-center border-b border-slate-200/50"><h2 class="text-sm md:text-base font-bold text-slate-700 flex items-center gap-2"><div class="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>Novas</h2><span id="k-cnt-novas" class="bg-white text-xs px-2 py-1 rounded-full shadow-sm font-bold">0</span></div>
+                            <div class="p-2 md:p-3 flex-1 overflow-y-auto space-y-3 column-content min-h-[150px]" id="k-novas"></div>
+                        </div>
+                        <!-- Coluna 2 -->
+                        <div class="kanban-column flex flex-col w-72 md:w-80 max-h-full bg-slate-100/80 rounded-xl border border-slate-200" id="col-andamento">
+                            <div class="p-3 md:p-4 flex justify-between items-center border-b border-slate-200/50"><h2 class="text-sm md:text-base font-bold text-slate-700 flex items-center gap-2"><div class="w-2.5 h-2.5 bg-amber-500 rounded-full"></div>Execução</h2><span id="k-cnt-andamento" class="bg-white text-xs px-2 py-1 rounded-full shadow-sm font-bold">0</span></div>
+                            <div class="p-2 md:p-3 flex-1 overflow-y-auto space-y-3 column-content min-h-[150px]" id="k-andamento"></div>
+                        </div>
+                        <!-- Coluna 3 -->
+                        <div class="kanban-column flex flex-col w-72 md:w-80 max-h-full bg-slate-100/80 rounded-xl border border-slate-200" id="col-aguardando">
+                            <div class="p-3 md:p-4 flex justify-between items-center border-b border-slate-200/50"><h2 class="text-sm md:text-base font-bold text-slate-700 flex items-center gap-2"><div class="w-2.5 h-2.5 bg-purple-500 rounded-full"></div>Terceiros</h2><span id="k-cnt-aguardando" class="bg-white text-xs px-2 py-1 rounded-full shadow-sm font-bold">0</span></div>
+                            <div class="p-2 md:p-3 flex-1 overflow-y-auto space-y-3 column-content min-h-[150px]" id="k-aguardando"></div>
+                        </div>
+                        <!-- Coluna 4 -->
+                        <div class="kanban-column flex flex-col w-72 md:w-80 max-h-full bg-slate-100/50 rounded-xl border border-slate-200 border-dashed" id="col-concluido">
+                            <div class="p-3 md:p-4 flex justify-between items-center border-b border-slate-200/50"><h2 class="text-sm md:text-base font-bold text-slate-700 flex items-center gap-2"><div class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></div>Concluídas</h2><span id="k-cnt-concluido" class="bg-white text-xs px-2 py-1 rounded-full shadow-sm font-bold">0</span></div>
+                            <div class="p-2 md:p-3 flex-1 overflow-y-auto space-y-3 column-content min-h-[150px]" id="k-concluido"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: DASHBOARD -->
+            <div id="view-dashboard" class="view-section flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0"><i data-lucide="inbox" class="w-6 h-6"></i></div>
+                        <div><p class="text-xs md:text-sm text-slate-500 font-medium">Total de Tickets</p><h3 class="text-xl md:text-2xl font-bold text-slate-800" id="dash-total">0</h3></div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0"><i data-lucide="activity" class="w-6 h-6"></i></div>
+                        <div><p class="text-xs md:text-sm text-slate-500 font-medium">Em Andamento</p><h3 class="text-xl md:text-2xl font-bold text-slate-800" id="dash-andamento">0</h3></div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 sm:col-span-2 lg:col-span-1">
+                        <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0"><i data-lucide="check-circle" class="w-6 h-6"></i></div>
+                        <div><p class="text-xs md:text-sm text-slate-500 font-medium">Concluídos</p><h3 class="text-xl md:text-2xl font-bold text-slate-800" id="dash-concluidos">0</h3></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: DIRETÓRIO DE PESSOAS -->
+            <div id="view-diretorio" class="view-section flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50">
+                <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden p-8 text-center">
+                    <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400"><i data-lucide="users" class="w-8 h-8"></i></div>
+                    <h3 class="text-lg font-bold text-slate-800">Diretório de Colaboradores</h3>
+                    <p class="text-slate-500 mt-2 text-sm">Integração com o sistema central de RH para admissões e demissões.</p>
+                </div>
+            </div>
+
+            <!-- VIEW: GESTÃO DE ACESSOS (Aprovação) -->
+            <div id="view-acessos" class="view-section flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50">
+                <div class="mb-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">Aprovação de Utilizadores G&G</h3>
+                        <p class="text-sm text-slate-500">Administre quem pode aceder a esta plataforma.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[600px]">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500">
+                                <th class="p-3 md:p-4 font-semibold">Colaborador / Área</th>
+                                <th class="p-3 md:p-4 font-semibold">Data Pedido</th>
+                                <th class="p-3 md:p-4 font-semibold">Estado</th>
+                                <th class="p-3 md:p-4 font-semibold text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-usuarios-acessos" class="divide-y divide-slate-100 text-sm">
+                            <tr><td colspan="4" class="p-8 text-center text-slate-400">A carregar utilizadores...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL DETALHES DE TICKET -->
+    <div id="modal-ticket" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm hidden flex justify-end opacity-0 transition-opacity duration-300">
+        <div id="modal-content-ticket" class="w-full max-w-xl bg-white h-full shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300">
+            <div class="flex justify-between items-center p-4 md:p-6 border-b border-slate-100 bg-slate-50">
+                <div class="flex items-center gap-3">
+                    <span id="mt-id" class="text-xs font-mono bg-white px-2 py-1 rounded border">#TRP</span>
+                    <span id="mt-cat" class="text-[10px] font-bold px-2 py-1 rounded uppercase bg-slate-200">Cat</span>
+                </div>
+                <button onclick="window.fecharModalTicket()" class="text-slate-400 hover:text-slate-800 p-2 rounded-lg bg-white shadow-sm border border-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+                <h2 id="mt-title" class="text-lg md:text-xl font-bold text-slate-900">Detalhes</h2>
+                <div class="bg-brand-50/50 p-4 rounded-xl border border-brand-100 flex items-center gap-4">
+                    <div id="mt-initials" class="w-10 h-10 rounded-full bg-brand-200 text-brand-700 font-bold flex items-center justify-center uppercase text-sm flex-shrink-0">UN</div>
+                    <div>
+                        <p id="mt-name" class="font-bold text-brand-900 text-sm">Nome Solicitante</p>
+                        <p id="mt-email" class="text-xs text-brand-700">Email</p>
+                    </div>
                 </div>
                 <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Prioridade</label>
-                    <select id="nt-prioridade" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500 bg-white">
-                        <option>Normal</option>
-                        <option>Alta</option>
-                        <option>Urgente</option>
-                    </select>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-2">Briefing / Detalhes Submetidos</h4>
+                    <div id="mt-desc" class="bg-slate-50 p-4 md:p-5 rounded-xl border border-slate-200 text-sm whitespace-pre-line text-slate-700 leading-relaxed shadow-inner"></div>
                 </div>
             </div>
-            <div>
-                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Solicitante</label>
-                <input id="nt-solicitante" type="text" placeholder="Nome / Área" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500">
+            <div class="p-4 border-t border-slate-200 bg-white flex justify-end">
+                <button onclick="window.fecharModalTicket()" class="w-full md:w-auto px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-semibold transition-colors">Fechar Painel</button>
             </div>
-            <div>
-                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Descrição</label>
-                <textarea id="nt-descricao" rows="4" placeholder="Detalhes da solicitação..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-500 resize-none"></textarea>
-            </div>
-        </div>
-        <div class="p-4 border-t border-slate-200 flex gap-3 justify-end">
-            <button onclick="closeNewTicketModal()" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancelar</button>
-            <button onclick="createTicket()" class="px-5 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition-colors flex items-center gap-2">
-                <i data-lucide="plus" class="w-4 h-4"></i> Criar Ticket
-            </button>
         </div>
     </div>
-</div>
 
-<!-- Toast -->
-<div id="toast" class="toast"></div>
+    <!-- UI E PWA SCRIPTS -->
+    <script>
+        lucide.createIcons();
 
-<!-- ===================== SCRIPTS ===================== -->
-<script>
-// ==================== DATA ====================
-let tickets = {
-    '8492': { id: '8492', title: 'Disparo de Lançamento: Novo Produto TriplaPay', type: 'clima', typeLabel: 'Comunicado', typeBadgeClass: 'bg-rose-50 text-rose-600', status: 'novas', solicitante: 'Marcos Klein', area: 'Marketing', email: 'marcos@tripla.com.br', descricao: 'Solicitação de disparo para toda a empresa avisando sobre o lançamento do TriplaPay. Precisa de arte. Usar as cores da nova marca.', sla: '2h restantes', slaClass: 'text-red-600' },
-    '8493': { id: '8493', title: 'Vaga: Desenvolvedor Front-end Sênior', type: 'rs', typeLabel: 'Recrutamento', typeBadgeClass: 'bg-indigo-50 text-indigo-600', status: 'novas', solicitante: 'Ana / TI', area: 'Tecnologia', email: 'ana@tripla.com.br', descricao: 'Aumento de quadro aprovado pelo gestor. Modelo remoto. Orçamento aprovado pela diretoria.', sla: '68h restantes', slaClass: 'text-emerald-600' },
-    '8495': { id: '8495', title: 'Alteração de Período de Férias', type: 'dp', typeLabel: 'Depto. Pessoal', typeBadgeClass: 'bg-amber-50 text-amber-600', status: 'novas', solicitante: 'Vera DP', area: 'RH', email: 'vera@tripla.com.br', descricao: 'Colaborador João Silva (matrícula 1042) solicitou alteração do período de férias de Novembro para Dezembro.', sla: '44h restantes', slaClass: 'text-amber-600' },
-    '8480': { id: '8480', title: 'Workshop de Liderança In-Company', type: 'td', typeLabel: 'Treinamento', typeBadgeClass: 'bg-fuchsia-50 text-fuchsia-600', status: 'andamento', solicitante: 'Carla RH', area: 'RH', email: 'carla@tripla.com.br', descricao: 'Cotação com fornecedores de treinamento para 15 líderes. Foco em comunicação não-violenta e feedback.', sla: '28h restantes', slaClass: 'text-amber-600' },
-    '8475': { id: '8475', title: 'Desligamento: Analista Financeiro', type: 'dp', typeLabel: 'Depto. Pessoal', typeBadgeClass: 'bg-amber-50 text-amber-600', status: 'aguardando', solicitante: 'RH Legal', area: 'Jurídico', email: 'legal@tripla.com.br', descricao: 'Processo de desligamento do colaborador Fábio Mendes. Aguardando retorno do médico do trabalho para o exame demissional.', sla: 'OK', slaClass: 'text-emerald-600' },
-    '8460': { id: '8460', title: 'Atestado Médico (3 dias)', type: 'dp', typeLabel: 'Depto. Pessoal', typeBadgeClass: 'bg-amber-50 text-amber-600', status: 'concluido', solicitante: 'Ana DP', area: 'RH', email: 'ana.dp@tripla.com.br', descricao: 'Colaborador apresentou atestado de 3 dias. Lançamento realizado no sistema.', sla: 'Concluído', slaClass: 'text-emerald-600' },
-};
+        // Configuração PWA (Progressive Web App) em tempo real
+        const manifestData = {
+            "name": "Portal G&G Tripla",
+            "short_name": "Tripla G&G",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#08173b",
+            "theme_color": "#1a56db",
+            "icons": [{
+                "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxyZWN0IHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgcng9IjQiIGZpbGw9IiMxYTU2ZGIiLz48L3N2Zz4=",
+                "sizes": "512x512",
+                "type": "image/svg+xml"
+            }]
+        };
+        const manifestString = encodeURIComponent(JSON.stringify(manifestData));
+        document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="data:application/manifest+json;charset=utf-8,${manifestString}">`);
 
-let employees = [
-    { nome: 'Carla RH', cargo: 'Business Partner', depto: 'Recursos Humanos', email: 'carla@tripla.com.br', regime: 'CLT', admissao: '2022-03-01', initials: 'CR', color: 'bg-brand-100 text-brand-700' },
-    { nome: 'Pedro T&D', cargo: 'Especialista T&D', depto: 'Recursos Humanos', email: 'pedro@tripla.com.br', regime: 'CLT', admissao: '2021-07-15', initials: 'PT', color: 'bg-purple-100 text-purple-700' },
-    { nome: 'Ana DP', cargo: 'Analista DP', depto: 'Departamento Pessoal', email: 'ana.dp@tripla.com.br', regime: 'CLT', admissao: '2020-01-10', initials: 'AS', color: 'bg-rose-100 text-rose-700' },
-    { nome: 'Marcos Klein', cargo: 'Gerente de Marketing', depto: 'Marketing', email: 'marcos@tripla.com.br', regime: 'CLT', admissao: '2019-05-20', initials: 'MK', color: 'bg-amber-100 text-amber-700' },
-    { nome: 'João Silva', cargo: 'Analista Financeiro', depto: 'Financeiro', email: 'joao@tripla.com.br', regime: 'CLT', admissao: '2023-02-01', initials: 'JS', color: 'bg-emerald-100 text-emerald-700' },
-    { nome: 'Vera DP', cargo: 'Coordenadora DP', depto: 'Departamento Pessoal', email: 'vera@tripla.com.br', regime: 'CLT', admissao: '2018-09-12', initials: 'VD', color: 'bg-slate-200 text-slate-700' },
-];
-
-let currentTicketId = null;
-
-// ==================== NAVIGATION ====================
-const pageTitles = {
-    dashboard: ['Dashboard', 'Visão geral do desempenho'],
-    kanban: ['Quadro de Solicitações', 'Acompanhamento e execução de tickets G&G'],
-    directory: ['Diretório de Pessoas', 'Colaboradores cadastrados'],
-    reports: ['Relatórios e SLAs', 'Análise de desempenho e cumprimento de prazos'],
-    preferences: ['Preferências', 'Configure o sistema'],
-    employees: ['Cadastro de Funcionários', 'Adicione novos colaboradores'],
-};
-
-function showPage(pageId) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
-
-    const page = document.getElementById('page-' + pageId);
-    if (page) page.classList.add('active');
-
-    const nav = document.querySelector(`.nav-link[data-page="${pageId}"]`);
-    if (nav) nav.classList.add('active');
-
-    const [title, subtitle] = pageTitles[pageId] || ['', ''];
-    document.getElementById('pageTitle').textContent = title;
-    document.getElementById('pageSubtitle').textContent = subtitle;
-
-    if (pageId === 'directory') renderDirectory();
-    lucide.createIcons();
-}
-
-document.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', () => showPage(link.dataset.page));
-});
-
-// ==================== DRAG & DROP ====================
-function initDragAndDrop() {
-    const cards = document.querySelectorAll('.kanban-card');
-    const columns = document.querySelectorAll('.column-content');
-
-    cards.forEach(card => {
-        card.addEventListener('dragstart', (e) => {
-            card.classList.add('is-dragging');
-            e.dataTransfer.setData('text/plain', card.dataset.id);
-        });
-        card.addEventListener('dragend', () => card.classList.remove('is-dragging'));
-    });
-
-    columns.forEach(col => {
-        col.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            col.closest('.kanban-column').classList.add('drag-over');
-            const after = getDragAfterElement(col, e.clientY);
-            const dragging = document.querySelector('.is-dragging');
-            if (!dragging) return;
-            if (!after) col.appendChild(dragging);
-            else col.insertBefore(dragging, after);
-        });
-
-        col.addEventListener('dragleave', (e) => {
-            if (!col.contains(e.relatedTarget)) {
-                col.closest('.kanban-column').classList.remove('drag-over');
+        // Mobile Sidebar Toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
             }
-        });
+        }
 
-        col.addEventListener('drop', (e) => {
-            col.closest('.kanban-column').classList.remove('drag-over');
-            const ticketId = e.dataTransfer.getData('text/plain');
-            const newStatus = col.closest('.kanban-column').dataset.status;
-            if (ticketId && newStatus) {
-                tickets[ticketId].status = newStatus;
-                updateColCounts();
-                updateFirestore(ticketId, { status: newStatus });
-                showToast(`Ticket #${ticketId} → ${statusLabel(newStatus)}`);
+        function toggleAuthMode(mode) {
+            const fLogin = document.getElementById('form-login');
+            const fReg = document.getElementById('form-register');
+            const sub = document.getElementById('auth-subtitle');
+            if (mode === 'register') {
+                fLogin.classList.add('hidden'); fReg.classList.remove('hidden');
+                sub.innerText = "Preencha para solicitar acesso à gestão.";
+            } else {
+                fReg.classList.add('hidden'); fLogin.classList.remove('hidden');
+                sub.innerText = "Faça login para gerir as solicitações.";
             }
-        });
-    });
-}
-
-function getDragAfterElement(container, y) {
-    const els = [...container.querySelectorAll('.kanban-card:not(.is-dragging)')];
-    return els.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = y - box.top - box.height / 2;
-        return offset < 0 && offset > closest.offset ? { offset, element: child } : closest;
-    }, { offset: Number.NEGATIVE_INFINITY }).element;
-}
-
-function statusLabel(s) {
-    const map = { novas: 'Novas', andamento: 'Em Execução', aguardando: 'Aguardando', concluido: 'Concluído' };
-    return map[s] || s;
-}
-
-function updateColCounts() {
-    ['novas', 'andamento', 'aguardando', 'concluido'].forEach(col => {
-        const count = document.getElementById('col-' + col)?.querySelectorAll('.kanban-card').length;
-        const header = document.querySelector(`[data-status="${col}"] .col-count`);
-        if (header && count !== undefined) header.textContent = count;
-    });
-}
-
-// ==================== FILTER ====================
-document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const f = btn.dataset.filter;
-        document.querySelectorAll('.kanban-card').forEach(card => {
-            card.style.display = (f === 'all' || card.dataset.type === f) ? '' : 'none';
-        });
-    });
-});
-
-// ==================== TICKET MODAL ====================
-function openTicketModal(id) {
-    const ticket = tickets[id];
-    if (!ticket) return;
-    currentTicketId = id;
-
-    document.getElementById('modalId').textContent = '#TRP-' + id;
-    document.getElementById('modalBadge').textContent = ticket.typeLabel;
-    document.getElementById('modalBadge').className = 'badge ' + ticket.typeBadgeClass;
-    document.getElementById('modalTitle').textContent = ticket.title;
-    document.getElementById('modalStatus').value = ticket.status;
-
-    document.getElementById('modalBody').innerHTML = `
-        <div>
-            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Dados do Solicitante</h4>
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-sm">
-                    ${ticket.solicitante.split(' ').slice(0,2).map(w=>w[0]).join('')}
-                </div>
-                <div>
-                    <p class="text-sm font-semibold text-slate-900">${ticket.solicitante}</p>
-                    <p class="text-xs text-slate-500">${ticket.area} / ${ticket.email}</p>
-                </div>
-            </div>
-        </div>
-        <div class="border-t border-slate-100"></div>
-        <div>
-            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Descrição</h4>
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-700 leading-relaxed">${ticket.descricao}</div>
-        </div>
-        <div>
-            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">SLA</h4>
-            <p class="text-sm font-semibold ${ticket.slaClass}">${ticket.sla}</p>
-        </div>
-        <div class="border-t border-slate-100"></div>
-        <div>
-            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Adicionar Comentário</h4>
-            <textarea rows="3" placeholder="Escreva uma atualização..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-200 resize-none"></textarea>
-            <button onclick="showToast('Comentário salvo!')" class="mt-2 text-xs font-semibold text-brand-600 hover:text-brand-700">Enviar comentário</button>
-        </div>
-    `;
-
-    const modal = document.getElementById('ticketModal');
-    modal.classList.remove('hidden');
-    setTimeout(() => {
-        modal.classList.remove('opacity-0');
-        document.getElementById('modalContent').classList.remove('translate-x-full');
-    }, 10);
-    lucide.createIcons();
-}
-
-function closeTicketModal() {
-    const modal = document.getElementById('ticketModal');
-    modal.classList.add('opacity-0');
-    document.getElementById('modalContent').classList.add('translate-x-full');
-    setTimeout(() => { modal.classList.add('hidden'); currentTicketId = null; }, 300);
-}
-
-function changeTicketStatus(newStatus) {
-    if (!currentTicketId) return;
-    tickets[currentTicketId].status = newStatus;
-    updateFirestore(currentTicketId, { status: newStatus });
-    showToast(`Status atualizado: ${statusLabel(newStatus)}`);
-}
-
-function saveTicket() { showToast('Ticket salvo com sucesso!'); closeTicketModal(); }
-function rejectTicket() { showToast('Solicitação rejeitada.'); closeTicketModal(); }
-
-document.getElementById('ticketModal').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('ticketModal')) closeTicketModal();
-});
-
-// ==================== NEW TICKET MODAL ====================
-document.getElementById('newTicketBtn').addEventListener('click', () => {
-    document.getElementById('newTicketModal').classList.add('open');
-    lucide.createIcons();
-});
-
-function closeNewTicketModal() {
-    document.getElementById('newTicketModal').classList.remove('open');
-}
-
-function createTicket() {
-    const titulo = document.getElementById('nt-titulo').value.trim();
-    const tipo = document.getElementById('nt-tipo').value;
-    if (!titulo || !tipo) { showToast('Preencha Título e Categoria!'); return; }
-
-    const id = String(8500 + Math.floor(Math.random() * 100));
-    const typeMap = {
-        clima: { label: 'Comunicado', cls: 'bg-rose-50 text-rose-600' },
-        rs: { label: 'Recrutamento', cls: 'bg-indigo-50 text-indigo-600' },
-        td: { label: 'Treinamento', cls: 'bg-fuchsia-50 text-fuchsia-600' },
-        dp: { label: 'Depto. Pessoal', cls: 'bg-amber-50 text-amber-600' },
-    };
-    const t = typeMap[tipo];
-    const solicitante = document.getElementById('nt-solicitante').value || 'Não informado';
-    const descricao = document.getElementById('nt-descricao').value || '';
-
-    tickets[id] = { id, title: titulo, type: tipo, typeLabel: t.label, typeBadgeClass: t.cls, status: 'novas', solicitante, area: '-', email: '-', descricao, sla: 'Novo', slaClass: 'text-slate-500' };
-
-    const col = document.getElementById('col-novas');
-    const cardHTML = `
-        <div class="kanban-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand-300 border-l-4 border-l-brand-400" draggable="true" data-type="${tipo}" data-id="${id}" onclick="openTicketModal('${id}')">
-            <div class="flex justify-between items-start mb-2">
-                <span class="badge ${t.cls}">${t.label}</span>
-                <span class="text-xs text-slate-400 font-mono">#${id}</span>
-            </div>
-            <h3 class="font-semibold text-slate-800 text-sm mb-1 leading-snug">${titulo}</h3>
-            <p class="text-xs text-slate-500 mb-3 line-clamp-2">${descricao || '—'}</p>
-            <div class="flex items-center justify-between">
-                <span class="text-xs text-slate-500">Agora</span>
-                <span class="badge bg-brand-50 text-brand-600">Novo</span>
-            </div>
-        </div>`;
-    col.insertAdjacentHTML('afterbegin', cardHTML);
-    updateColCounts();
-    initDragAndDrop();
-
-    saveToFirestore('tickets', id, tickets[id]);
-    showToast(`Ticket #${id} criado com sucesso!`);
-    closeNewTicketModal();
-
-    // Reset form
-    ['nt-titulo','nt-tipo','nt-prioridade','nt-solicitante','nt-descricao'].forEach(f => {
-        const el = document.getElementById(f);
-        if (el) el.value = '';
-    });
-    lucide.createIcons();
-}
-
-// ==================== NOTIFICATION PANEL ====================
-document.getElementById('notifBtn').addEventListener('click', () => {
-    document.getElementById('notifPanel').classList.add('open');
-    document.getElementById('notifOverlay').classList.remove('hidden');
-    document.getElementById('notifBadge').style.display = 'none';
-    lucide.createIcons();
-});
-
-function closeNotifPanel() {
-    document.getElementById('notifPanel').classList.remove('open');
-    document.getElementById('notifOverlay').classList.add('hidden');
-}
-
-// ==================== DIRECTORY ====================
-const deptColors = {
-    'Recursos Humanos': 'bg-brand-100 text-brand-700',
-    'Departamento Pessoal': 'bg-amber-100 text-amber-700',
-    'Tecnologia': 'bg-blue-100 text-blue-700',
-    'Marketing': 'bg-fuchsia-100 text-fuchsia-700',
-    'Financeiro': 'bg-emerald-100 text-emerald-700',
-    'Jurídico': 'bg-slate-200 text-slate-700',
-    'Comercial': 'bg-orange-100 text-orange-700',
-    'Operações': 'bg-purple-100 text-purple-700',
-};
-
-function renderDirectory() {
-    const grid = document.getElementById('peopleGrid');
-    if (!grid) return;
-    grid.innerHTML = employees.map(emp => {
-        const initials = emp.initials || emp.nome.split(' ').slice(0,2).map(w=>w[0]).join('');
-        const colorClass = emp.color || deptColors[emp.depto] || 'bg-slate-200 text-slate-700';
-        const admDate = emp.admissao ? new Date(emp.admissao).toLocaleDateString('pt-BR') : '-';
-        return `
-        <div class="stat-card hover:shadow-md transition-shadow cursor-pointer group">
-            <div class="flex flex-col items-center text-center">
-                <div class="w-14 h-14 rounded-full ${colorClass} flex items-center justify-center font-bold text-lg mb-3">${initials}</div>
-                <p class="font-bold text-slate-800 text-sm">${emp.nome}</p>
-                <p class="text-xs text-slate-500 mt-0.5">${emp.cargo}</p>
-                <span class="mt-2 text-[11px] font-semibold px-2 py-0.5 rounded-full ${colorClass}">${emp.depto}</span>
-            </div>
-            <div class="mt-4 pt-4 border-t border-slate-100 space-y-1">
-                <p class="text-xs text-slate-500 flex items-center gap-1"><span class="font-medium text-slate-700">Email:</span> ${emp.email}</p>
-                <p class="text-xs text-slate-500 flex items-center gap-1"><span class="font-medium text-slate-700">Regime:</span> ${emp.regime}</p>
-                <p class="text-xs text-slate-500 flex items-center gap-1"><span class="font-medium text-slate-700">Admissão:</span> ${admDate}</p>
-            </div>
-        </div>`;
-    }).join('');
-}
-
-// ==================== EMPLOYEES ====================
-function saveEmployee() {
-    const nome = document.getElementById('emp-nome').value.trim();
-    const cargo = document.getElementById('emp-cargo').value.trim();
-    const depto = document.getElementById('emp-depto').value;
-    const email = document.getElementById('emp-email').value.trim();
-    const cpf = document.getElementById('emp-cpf').value.trim();
-    const regime = document.getElementById('emp-regime').value;
-    const admissao = document.getElementById('emp-admissao').value;
-
-    if (!nome || !cargo || !depto || !email) {
-        showToast('Preencha todos os campos obrigatórios (*)!');
-        return;
-    }
-
-    const initials = nome.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
-    const colorClass = deptColors[depto] || 'bg-slate-200 text-slate-700';
-
-    const emp = { nome, cargo, depto, email, cpf, regime, admissao, initials, color: colorClass };
-    employees.push(emp);
-
-    saveToFirestore('employees', nome.replace(/\s/g,'_'), emp);
-    showToast(`Funcionário "${nome}" cadastrado com sucesso!`);
-    clearEmployeeForm();
-}
-
-function clearEmployeeForm() {
-    ['emp-nome','emp-cpf','emp-email','emp-tel','emp-cargo','emp-salario','emp-gestor','emp-obs'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-    });
-    document.getElementById('emp-depto').value = '';
-    document.getElementById('emp-regime').value = 'CLT';
-    document.getElementById('emp-admissao').value = '';
-}
-
-// ==================== FIREBASE ====================
-let db = null;
-
-function loadFirebaseConfig() {
-    try {
-        const cfg = JSON.parse(localStorage.getItem('triplaFirebaseConfig') || 'null');
-        if (cfg) {
-            document.getElementById('fb-apiKey').value = cfg.apiKey || '';
-            document.getElementById('fb-authDomain').value = cfg.authDomain || '';
-            document.getElementById('fb-projectId').value = cfg.projectId || '';
-            document.getElementById('fb-storageBucket').value = cfg.storageBucket || '';
-            document.getElementById('fb-messagingSenderId').value = cfg.messagingSenderId || '';
-            document.getElementById('fb-appId').value = cfg.appId || '';
         }
-    } catch(e) {}
-}
 
-function saveFirebaseConfig() {
-    const cfg = {
-        apiKey: document.getElementById('fb-apiKey').value.trim(),
-        authDomain: document.getElementById('fb-authDomain').value.trim(),
-        projectId: document.getElementById('fb-projectId').value.trim(),
-        storageBucket: document.getElementById('fb-storageBucket').value.trim(),
-        messagingSenderId: document.getElementById('fb-messagingSenderId').value.trim(),
-        appId: document.getElementById('fb-appId').value.trim(),
-    };
+        const views = document.querySelectorAll('.view-section');
+        const navBtns = document.querySelectorAll('.nav-btn');
+        const titles = {
+            'dashboard': {t: 'Dashboard Analítico', s: 'Visão geral da operação'},
+            'kanban': {t: 'Quadro Kanban', s: 'Acompanhamento de tickets'},
+            'diretorio': {t: 'Diretório / RD', s: 'Integração de RH'},
+            'acessos': {t: 'Acessos G&G', s: 'Aprovação de permissões'}
+        };
 
-    if (!cfg.apiKey || !cfg.projectId) {
-        showFirebaseStatus('Preencha ao menos a API Key e o Project ID.', false);
-        return;
-    }
-
-    localStorage.setItem('triplaFirebaseConfig', JSON.stringify(cfg));
-    showToast('Credenciais salvas! Recarregue a página para conectar.');
-    showFirebaseStatus('Credenciais salvas com sucesso!', true);
-}
-
-async function testFirebaseConnection() {
-    const projectId = document.getElementById('fb-projectId').value.trim();
-    if (!projectId) {
-        showFirebaseStatus('Informe o Project ID para testar.', false);
-        return;
-    }
-    showFirebaseStatus('Testando conexão...', null);
-    try {
-        const res = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`, { method: 'GET' });
-        if (res.ok || res.status === 403) {
-            showFirebaseStatus('Projeto encontrado! Configure as regras de segurança no Console Firebase.', true);
-        } else {
-            showFirebaseStatus(`Projeto não encontrado ou credenciais inválidas (HTTP ${res.status}).`, false);
-        }
-    } catch(e) {
-        showFirebaseStatus('Erro de rede. Verifique o Project ID.', false);
-    }
-}
-
-function showFirebaseStatus(msg, ok) {
-    const el = document.getElementById('fb-status');
-    el.classList.remove('hidden');
-    el.className = `mt-3 text-sm px-3 py-2 rounded-lg font-medium ${ok === true ? 'bg-emerald-50 text-emerald-700' : ok === false ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'}`;
-    el.textContent = msg;
-}
-
-async function initFirebase() {
-    try {
-        const cfg = JSON.parse(localStorage.getItem('triplaFirebaseConfig') || 'null');
-        if (!cfg || !cfg.apiKey) return;
-
-        const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js');
-        const { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc } = await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js');
-
-        const app = getApps().length === 0 ? initializeApp(cfg) : getApps()[0];
-        db = getFirestore(app);
-
-        // Listen for real-time ticket updates
-        onSnapshot(collection(db, 'tickets'), (snapshot) => {
-            snapshot.docChanges().forEach(change => {
-                const data = change.doc.data();
-                const id = change.doc.id;
-                if (change.type === 'added' || change.type === 'modified') {
-                    if (!tickets[id]) {
-                        // New ticket from another session — add to board
-                        tickets[id] = data;
-                    }
-                }
+        navBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = btn.getAttribute('data-target');
+                if(!target) return;
+                navBtns.forEach(b => {
+                    b.classList.remove('bg-brand-600', 'text-white', 'shadow-md');
+                    b.classList.add('text-brand-200');
+                });
+                btn.classList.remove('text-brand-200');
+                btn.classList.add('bg-brand-600', 'text-white', 'shadow-md');
+                views.forEach(v => v.classList.remove('active'));
+                document.getElementById(`view-${target}`).classList.add('active');
+                document.getElementById('header-title').innerText = titles[target].t;
+                document.getElementById('header-subtitle').innerText = titles[target].s;
+                
+                // Fechar sidebar mobile ao clicar em um link
+                if(window.innerWidth < 768) toggleSidebar();
             });
-        }, (err) => console.warn('Firebase listener error:', err));
+        });
 
-        document.querySelector('.firebase-live').textContent = 'Firebase conectado ✓';
-    } catch(e) {
-        console.warn('Firebase não configurado. Usando modo offline.', e.message);
-        document.querySelector('.firebase-live').textContent = 'Modo offline';
-        document.querySelector('.firebase-live').style.color = '#94a3b8';
-    }
-}
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => {
+                    b.classList.remove('bg-slate-800', 'text-white');
+                    b.classList.add('bg-slate-100', 'text-slate-600');
+                });
+                btn.classList.remove('bg-slate-100', 'text-slate-600');
+                btn.classList.add('bg-slate-800', 'text-white');
+                const filterValue = btn.dataset.filter;
+                document.querySelectorAll('.kanban-card').forEach(card => {
+                    if (filterValue === 'all' || card.dataset.type === filterValue) card.style.display = 'block';
+                    else card.style.display = 'none';
+                });
+            });
+        });
 
-async function saveToFirestore(collectionName, docId, data) {
-    if (!db) return;
-    try {
-        const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js');
-        await setDoc(doc(db, collectionName, docId), data);
-    } catch(e) {
-        console.warn('Firestore save failed:', e.message);
-    }
-}
+        window.fecharModalTicket = function() {
+            const m = document.getElementById('modal-ticket');
+            const mc = document.getElementById('modal-content-ticket');
+            m.classList.add('opacity-0'); mc.classList.add('translate-x-full');
+            setTimeout(() => m.classList.add('hidden'), 300);
+        }
+    </script>
 
-async function updateFirestore(ticketId, data) {
-    if (!db) return;
-    try {
-        const { doc, updateDoc } = await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js');
-        await updateDoc(doc(db, 'tickets', ticketId), data);
-    } catch(e) {
-        console.warn('Firestore update failed:', e.message);
-    }
-}
+    <!-- FIREBASE E LÓGICA DE DADOS -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-// ==================== TOAST ====================
-function showToast(msg) {
-    const toast = document.getElementById('toast');
-    toast.textContent = msg;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3000);
-}
+        const firebaseConfig = {
+            apiKey: "AIzaSyDS7ObifHn2minG2TMcdUGlRyD8SP8vcAs",
+            authDomain: "tripla-gg-portal.firebaseapp.com",
+            projectId: "tripla-gg-portal",
+            storageBucket: "tripla-gg-portal.firebasestorage.app",
+            messagingSenderId: "887500083882",
+            appId: "1:887500083882:web:05af6ad257ce17fed7b6d3"
+        };
 
-// ==================== GLOBAL SEARCH ====================
-document.getElementById('globalSearch').addEventListener('input', (e) => {
-    const q = e.target.value.toLowerCase();
-    document.querySelectorAll('.kanban-card').forEach(card => {
-        const text = card.textContent.toLowerCase();
-        card.style.display = (!q || text.includes(q)) ? '' : 'none';
-    });
-});
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-// ==================== INIT ====================
-document.addEventListener('DOMContentLoaded', () => {
-    lucide.createIcons();
-    initDragAndDrop();
-    updateColCounts();
-    loadFirebaseConfig();
-    initFirebase();
-});
-</script>
+        // Inicializa o polyfill Mobile Drag and Drop para telas de toque
+        MobileDragDrop.polyfill({ holdToDrag: 150 });
+        window.addEventListener('touchmove', function() {}, {passive: false}); // previne scroll da tela ao arrastar
+
+        let unsubscribeApp = null;
+        let unsubscribeAcessos = null;
+
+        onAuthStateChanged(auth, (user) => {
+            const vAuth = document.getElementById('auth-view');
+            const vPend = document.getElementById('pending-view');
+            const vApp = document.getElementById('app-view');
+
+            if (user) {
+                vAuth.classList.add('hidden');
+                
+                onSnapshot(doc(db, "usuarios", user.uid), (docSnap) => {
+                    if (docSnap.exists()) {
+                        const userData = docSnap.data();
+                        
+                        if (userData.status === 'aprovado') {
+                            vPend.classList.add('hidden');
+                            vApp.classList.remove('hidden');
+                            
+                            document.getElementById('user-name').innerText = userData.nome;
+                            document.getElementById('user-initials').innerText = userData.nome.slice(0,2).toUpperCase();
+                            document.getElementById('user-area').innerText = userData.area || 'Equipe G&G';
+                            
+                            iniciarDadosApp();
+                        } else {
+                            vApp.classList.add('hidden');
+                            vPend.classList.remove('hidden');
+                            if(unsubscribeApp) unsubscribeApp();
+                            if(unsubscribeAcessos) unsubscribeAcessos();
+                        }
+                    } else { signOut(auth); }
+                });
+            } else {
+                vAuth.classList.remove('hidden'); vPend.classList.add('hidden'); vApp.classList.add('hidden');
+                if(unsubscribeApp) unsubscribeApp();
+                if(unsubscribeAcessos) unsubscribeAcessos();
+            }
+        });
+
+        // Formulário de Login
+        document.getElementById('form-login').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-login');
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Aguarde...`;
+            try {
+                await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value);
+            } catch (err) { alert("Erro ao entrar. Verifique credenciais."); } 
+            finally { btn.innerHTML = `Entrar`; }
+        });
+
+        // Formulário de Registro (Com Área)
+        document.getElementById('form-register').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-register');
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>...`;
+            
+            const nome = document.getElementById('reg-nome').value;
+            const email = document.getElementById('reg-email').value;
+            const area = document.getElementById('reg-area').value;
+            const pass = document.getElementById('reg-pass').value;
+
+            try {
+                const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                const statusInicial = email.includes('admin') ? 'aprovado' : 'pendente';
+
+                await setDoc(doc(db, "usuarios", cred.user.uid), {
+                    nome: nome,
+                    email: email,
+                    area: area,
+                    status: statusInicial,
+                    dataCadastro: serverTimestamp(),
+                    role: 'gg_member'
+                });
+            } catch (err) { alert("Erro: " + err.message); btn.innerHTML = `Solicitar Acesso`; }
+        });
+
+        window.sairDaConta = () => signOut(auth);
+
+        // Lógica KANBAN
+        const estilosCat = {
+            rs: { bg: 'bg-indigo-100', txt: 'text-indigo-700', lbl: 'R&S' },
+            td: { bg: 'bg-fuchsia-100', txt: 'text-fuchsia-700', lbl: 'T&D' },
+            dp: { bg: 'bg-amber-100', txt: 'text-amber-700', lbl: 'DP' },
+            clima: { bg: 'bg-rose-100', txt: 'text-rose-700', lbl: 'Cultura' }
+        };
+
+        function iniciarDadosApp() {
+            if (unsubscribeApp) return;
+
+            unsubscribeApp = onSnapshot(collection(db, "tickets"), (snapshot) => {
+                const kCols = { novas: document.getElementById('k-novas'), andamento: document.getElementById('k-andamento'), aguardando: document.getElementById('k-aguardando'), concluido: document.getElementById('k-concluido') };
+                Object.values(kCols).forEach(col => col.innerHTML = '');
+                
+                let counts = { novas: 0, andamento: 0, aguardando: 0, concluido: 0 };
+                let total = 0;
+
+                snapshot.forEach((docSnap) => {
+                    const ticket = docSnap.data();
+                    const id = docSnap.id;
+                    const status = ticket.status || 'novas';
+                    total++;
+
+                    const est = estilosCat[ticket.categoria] || { bg: 'bg-slate-200', txt: 'text-slate-700', lbl: 'Outro' };
+                    const isDone = status === 'concluido' ? 'opacity-60' : '';
+                    
+                    const cardHTML = `
+                    <div class="kanban-card bg-white p-3 md:p-4 rounded-xl shadow-sm border border-slate-200 mb-3" draggable="true" data-id="${id}" data-type="${ticket.categoria}" onclick="window.abrirModalTicket('${id}')">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-[9px] md:text-[10px] font-bold px-2 py-0.5 md:py-1 rounded uppercase ${est.bg} ${est.txt} ${isDone}">${est.lbl}</span>
+                            <span class="text-[10px] md:text-xs text-slate-400 font-mono">#${id.slice(0,4).toUpperCase()}</span>
+                        </div>
+                        <h3 class="font-semibold text-sm truncate mb-1 ${isDone}">${ticket.solicitanteNome || 'Anônimo'}</h3>
+                        <p class="text-xs text-slate-500 line-clamp-2 ${isDone}">${ticket.detalhes}</p>
+                    </div>`;
+
+                    if(kCols[status]) { kCols[status].innerHTML += cardHTML; counts[status]++; }
+                });
+
+                Object.keys(counts).forEach(key => document.getElementById(`k-cnt-${key}`).innerText = counts[key]);
+                document.getElementById('dash-total').innerText = total;
+                document.getElementById('dash-andamento').innerText = counts.andamento;
+                document.getElementById('dash-concluidos').innerText = counts.concluido;
+
+                configurarDragAndDrop();
+            });
+
+            // Lógica Acessos
+            unsubscribeAcessos = onSnapshot(collection(db, "usuarios"), (snapshot) => {
+                const tabela = document.getElementById('lista-usuarios-acessos');
+                tabela.innerHTML = '';
+                let contPendentes = 0;
+
+                snapshot.forEach(docSnap => {
+                    const usr = docSnap.data();
+                    const uid = docSnap.id;
+                    if(usr.status === 'pendente') contPendentes++;
+
+                    const statusBadge = usr.status === 'pendente' ? `<span class="px-2 py-1 rounded text-[10px] md:text-xs font-semibold bg-amber-100 text-amber-700">Pendente</span>`
+                        : (usr.status === 'aprovado' ? `<span class="px-2 py-1 rounded text-[10px] md:text-xs font-semibold bg-emerald-100 text-emerald-700">Aprovado</span>`
+                        : `<span class="px-2 py-1 rounded text-[10px] md:text-xs font-semibold bg-rose-100 text-rose-700">Rejeitado</span>`);
+
+                    const acoesHTML = usr.status === 'pendente' 
+                        ? `<div class="flex gap-1 md:gap-2 justify-end"><button onclick="window.aprovarUsuario('${uid}')" class="px-2 md:px-3 py-1.5 bg-emerald-500 text-white rounded text-[10px] md:text-xs font-semibold">Aprovar</button>
+                           <button onclick="window.rejeitarUsuario('${uid}')" class="px-2 md:px-3 py-1.5 bg-rose-100 text-rose-700 rounded text-[10px] md:text-xs font-semibold">Recusar</button></div>`
+                        : `<span class="text-[10px] md:text-xs text-slate-400">Decidido</span>`;
+
+                    tabela.innerHTML += `
+                    <tr class="hover:bg-slate-50 border-b border-slate-50 last:border-0">
+                        <td class="p-3 md:p-4">
+                            <p class="font-bold text-slate-800 text-sm md:text-base">${usr.nome}</p>
+                            <p class="text-xs text-slate-500">${usr.email}</p>
+                            <span class="inline-block mt-1 bg-brand-50 text-brand-600 text-[10px] px-1.5 rounded">${usr.area || 'N/A'}</span>
+                        </td>
+                        <td class="p-3 md:p-4 text-xs text-slate-600">${usr.dataCadastro ? usr.dataCadastro.toDate().toLocaleDateString('pt-BR') : 'Hoje'}</td>
+                        <td class="p-3 md:p-4">${statusBadge}</td>
+                        <td class="p-3 md:p-4 text-right">${acoesHTML}</td>
+                    </tr>`;
+                });
+
+                const badge = document.getElementById('badge-pendentes');
+                if(contPendentes > 0) { badge.innerText = contPendentes; badge.classList.remove('hidden'); } 
+                else { badge.classList.add('hidden'); }
+            });
+        }
+
+        window.aprovarUsuario = async (uid) => { if(confirm("Aprovar utilizador?")) await updateDoc(doc(db, "usuarios", uid), { status: 'aprovado' }); };
+        window.rejeitarUsuario = async (uid) => { if(confirm("Bloquear acesso deste utilizador?")) await updateDoc(doc(db, "usuarios", uid), { status: 'rejeitado' }); };
+
+        function configurarDragAndDrop() {
+            let draggedId = null;
+            document.querySelectorAll('.kanban-card').forEach(card => {
+                // Eventos Nativos
+                card.addEventListener('dragstart', (e) => { draggedId = card.dataset.id; card.classList.add('is-dragging'); });
+                card.addEventListener('dragend', () => { card.classList.remove('is-dragging'); draggedId = null; });
+            });
+            document.querySelectorAll('.column-content').forEach(col => {
+                col.addEventListener('dragover', e => { e.preventDefault(); col.parentElement.classList.add('drag-over'); });
+                col.addEventListener('dragleave', () => col.parentElement.classList.remove('drag-over'));
+                col.addEventListener('drop', async (e) => {
+                    e.preventDefault(); col.parentElement.classList.remove('drag-over');
+                    if (draggedId) {
+                        try { await updateDoc(doc(db, "tickets", draggedId), { status: col.id.replace('k-','') }); } 
+                        catch (err) { console.error("Erro D&D: ", err); }
+                    }
+                });
+            });
+        }
+
+        window.abrirModalTicket = async function(id) {
+            const snap = await getDoc(doc(db, "tickets", id));
+            if (snap.exists()) {
+                const data = snap.data();
+                const est = estilosCat[data.categoria] || { bg:'bg-slate-200', txt:'text-slate-700', lbl:'Outro' };
+                document.getElementById('mt-id').innerText = `#${id.slice(0,6).toUpperCase()}`;
+                
+                const elCat = document.getElementById('mt-cat');
+                elCat.className = `text-[10px] font-bold px-2 py-1 rounded uppercase ${est.bg} ${est.txt}`;
+                elCat.innerText = est.lbl;
+                
+                document.getElementById('mt-title').innerText = `Pedido: ${est.lbl}`;
+                document.getElementById('mt-name').innerText = data.solicitanteNome || "Sem nome";
+                document.getElementById('mt-email').innerText = `${data.solicitanteEmail} • Dep: ${data.areaSolicitante || "N/A"}`;
+                document.getElementById('mt-initials').innerText = (data.solicitanteNome || "UN").slice(0,2).toUpperCase();
+                document.getElementById('mt-desc').innerText = data.detalhes || "Nenhum detalhe.";
+                
+                const m = document.getElementById('modal-ticket');
+                const mc = document.getElementById('modal-content-ticket');
+                m.classList.remove('hidden');
+                setTimeout(() => { m.classList.remove('opacity-0'); mc.classList.remove('translate-x-full'); }, 10);
+            }
+        }
+    </script>
 </body>
 </html>
