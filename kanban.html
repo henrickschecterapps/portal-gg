@@ -2,7 +2,13 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0d275e">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="G&G Portal">
+    <link rel="manifest" href="manifest.json">
     <title>Painel G&G | Tripla</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -40,6 +46,9 @@
 
         .page{display:none}
         .page.active{display:flex;flex-direction:column;flex:1;min-width:0;overflow:hidden}
+        /* Pages que precisam de scroll vertical */
+        #page-dashboard.active,#page-reports.active,#page-directory.active,
+        #page-preferences.active,#page-admin.active{overflow-y:auto;overflow-x:hidden}
 
         .nav-link{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:#a3c7ff;transition:all .15s;font-size:13px;font-weight:500;cursor:pointer}
         .nav-link:hover{color:white;background:rgba(255,255,255,.1)}
@@ -161,6 +170,59 @@
         .view-toggle-btn.active{background:#1e293b;color:white}
         .view-toggle-btn:not(.active){background:transparent;color:#64748b}
         .view-toggle-btn:not(.active):hover{background:#f1f5f9}
+        /* ── Mobile sidebar drawer ── */
+        @media(max-width:767px){
+            #sidebar{position:fixed;top:0;left:0;height:100%;z-index:50;transform:translateX(-100%);transition:transform .28s cubic-bezier(.16,1,.3,1);display:flex!important}
+            #sidebar.mobile-open{transform:translateX(0)}
+            #sidebarOverlay{display:block}
+            #mainContent{margin-left:0!important}
+            body{overflow:hidden}
+        }
+        @media(min-width:768px){
+            #menuBtn{display:none!important}
+            #sidebarOverlay{display:none!important}
+        }
+        #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:49;backdrop-filter:blur(2px)}
+
+        /* ── Responsive modal grid ── */
+        @media(max-width:639px){
+            .modal-panel{max-width:100%!important}
+            #tModalPrioridade,#tModalDeadline,#tModalStatus,#tModalResponsavel{font-size:12px}
+            .grid.grid-cols-2{grid-template-columns:1fr!important}
+        }
+
+        /* ── Kanban toolbar wraps on mobile ── */
+        @media(max-width:639px){
+            #page-kanban .bg-white.border-b{flex-wrap:wrap;gap:6px;padding:8px 12px}
+            #page-kanban .flex-1{display:none}
+        }
+
+        /* ── Dashboard charts stack on mobile ── */
+        @media(max-width:639px){
+            #page-dashboard .grid{grid-template-columns:1fr!important}
+        }
+
+        /* ── Bottom nav for mobile ── */
+        #bottomNav{display:none}
+        @media(max-width:767px){
+            #bottomNav{display:flex;position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e2e8f0;z-index:40;padding:6px 0 calc(6px + env(safe-area-inset-bottom));gap:0}
+            #bottomNav .bn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;cursor:pointer;color:#94a3b8;font-size:10px;font-weight:500;transition:color .15s;border:none;background:none}
+            #bottomNav .bn-item.active,#bottomNav .bn-item:hover{color:#1a56db}
+            #bottomNav .bn-item svg{width:20px;height:20px}
+            /* Push main content up to avoid bottom nav overlap */
+            #mainContent{padding-bottom:60px}
+        }
+
+        /* ── Header mobile adjustments ── */
+        @media(max-width:767px){
+            header{padding-left:12px;padding-right:12px}
+            #pageTitle{font-size:15px}
+        }
+
+        /* ── PWA meta ── */
+        @media(max-width:767px){
+            .stat-card{padding:14px}
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans antialiased h-screen flex overflow-hidden">
@@ -173,13 +235,17 @@
 </div>
 
 <!-- ===================== SIDEBAR ===================== -->
+<div id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
 <aside class="w-60 bg-brand-950 text-white flex flex-col shadow-xl z-20 flex-shrink-0" id="sidebar" style="display:none">
     <div class="h-16 flex items-center gap-3 px-5 border-b border-brand-800/50">
         <svg width="28" height="28" viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="8" fill="#1a56db"/><path d="M12 28L20 12L28 28H23L20 22L17 28H12Z" fill="white"/><path d="M20 22L23 28H28L20 12V22Z" fill="#75a8ff"/></svg>
-        <div>
+        <div class="flex-1 min-w-0">
             <span class="text-lg font-extrabold tracking-tight text-white block leading-none">tripla</span>
             <span class="text-[10px] text-brand-300 font-medium tracking-wider uppercase">Gente & Gestão</span>
         </div>
+        <button onclick="closeMobileSidebar()" id="sidebarCloseBtn" class="md:hidden p-1.5 text-brand-300 hover:text-white rounded-lg transition-colors flex-shrink-0">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
     </div>
 
     <nav class="flex-1 py-5 px-3 space-y-0.5 overflow-y-auto">
@@ -225,23 +291,26 @@
         <h1 class="text-lg font-bold text-slate-800" id="pageTitle">Quadro de Solicitações</h1>
         <p class="text-xs text-slate-500" id="pageSubtitle">Acompanhamento em tempo real</p>
     </div>
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2">
+        <button id="menuBtn" onclick="openMobileSidebar()" class="md:hidden w-9 h-9 rounded-full bg-slate-100 text-slate-600 hover:bg-brand-50 hover:text-brand-600 transition-colors flex items-center justify-center flex-shrink-0">
+            <i data-lucide="menu" class="w-4 h-4"></i>
+        </button>
         <div class="relative hidden sm:block">
             <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
             <input id="globalSearch" type="text" placeholder="Buscar ticket..." class="pl-8 pr-4 py-1.5 bg-slate-100 border border-transparent rounded-lg text-sm focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition-all w-48">
         </div>
-        <button id="notifBtn" class="relative w-9 h-9 rounded-full bg-slate-100 text-slate-600 hover:bg-brand-50 hover:text-brand-600 transition-colors flex items-center justify-center">
+        <button id="notifBtn" class="relative w-9 h-9 rounded-full bg-slate-100 text-slate-600 hover:bg-brand-50 hover:text-brand-600 transition-colors flex items-center justify-center flex-shrink-0">
             <i data-lucide="bell" class="w-4 h-4"></i>
             <span id="notifBadge" class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white hidden"></span>
         </button>
-        <button id="newTicketBtn" class="hidden sm:flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors shadow-sm">
+        <button id="newTicketBtn" class="hidden sm:flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors shadow-sm flex-shrink-0">
             <i data-lucide="plus" class="w-4 h-4"></i> Novo Ticket
         </button>
     </div>
 </header>
 
 <!-- ===== DASHBOARD ===== -->
-<div id="page-dashboard" class="page overflow-y-auto p-5 gap-4 flex-col">
+<div id="page-dashboard" class="page p-5 gap-4 flex-col">
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div class="stat-card"><div class="flex items-center justify-between mb-2"><span class="text-xs font-medium text-slate-500">Abertos</span><div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center"><i data-lucide="inbox" class="w-4 h-4 text-blue-600"></i></div></div><p class="text-3xl font-extrabold text-slate-800" id="kpi-open">—</p><p class="text-xs text-slate-500 mt-1">tickets na triagem</p></div>
         <div class="stat-card"><div class="flex items-center justify-between mb-2"><span class="text-xs font-medium text-slate-500">Em Execução</span><div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center"><i data-lucide="zap" class="w-4 h-4 text-amber-600"></i></div></div><p class="text-3xl font-extrabold text-slate-800" id="kpi-wip">—</p><p class="text-xs text-amber-600 mt-1" id="kpi-sla-risk">verificando SLA...</p></div>
@@ -412,7 +481,7 @@
 </div>
 
 <!-- ===== REPORTS ===== -->
-<div id="page-reports" class="page overflow-y-auto p-5 flex-col gap-4">
+<div id="page-reports" class="page p-5 flex-col gap-4">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
         <div class="stat-card"><h3 class="font-bold text-slate-700 text-sm mb-1">SLA Global</h3><p class="text-4xl font-extrabold text-emerald-600" id="rep-sla">—%</p><p class="text-xs text-slate-500 mt-1">tickets dentro do prazo</p></div>
         <div class="stat-card"><h3 class="font-bold text-slate-700 text-sm mb-1">Concluídos (30d)</h3><p class="text-4xl font-extrabold text-brand-600" id="rep-done">—</p></div>
@@ -723,6 +792,26 @@
         </div>
     </div>
 </div>
+
+<!-- ===================== BOTTOM NAV (mobile) ===================== -->
+<nav id="bottomNav">
+    <button class="bn-item active" data-page="dashboard" onclick="showPage('dashboard');setBottomNav('dashboard')">
+        <i data-lucide="layout-dashboard"></i>
+        <span>Dashboard</span>
+    </button>
+    <button class="bn-item" data-page="kanban" onclick="showPage('kanban');setBottomNav('kanban')">
+        <i data-lucide="kanban-square"></i>
+        <span>Quadro</span>
+    </button>
+    <button class="bn-item" data-page="reports" onclick="showPage('reports');setBottomNav('reports')">
+        <i data-lucide="pie-chart"></i>
+        <span>Relatórios</span>
+    </button>
+    <button class="bn-item" data-page="preferences" onclick="showPage('preferences');setBottomNav('preferences')">
+        <i data-lucide="settings"></i>
+        <span>Config</span>
+    </button>
+</nav>
 
 <!-- Toast -->
 <div id="toast" class="toast"></div>
@@ -2000,6 +2089,7 @@ document.addEventListener('keydown', e => {
         document.querySelectorAll('.center-modal.open').forEach(m => m.classList.remove('open'));
         if (currentTicketId) closeTicketModal();
         closeNotifPanel();
+        closeMobileSidebar();
     } else if (e.key === 'n' || e.key === 'N') {
         document.getElementById('newTicketModal').classList.add('open');
         lucide.createIcons();
@@ -2062,6 +2152,7 @@ window.showPage = function(pageId) {
     if (pageId === 'admin') { loadAdminUsers(); loadFormConfig(); }
     if (pageId === 'directory') renderDirectory();
     if (pageId === 'reports') renderReports();
+    setBottomNav(pageId);
     lucide.createIcons();
 };
 
@@ -2121,6 +2212,31 @@ window.switchAdminTab = function(tab) {
     document.getElementById('admin-tab-form').classList.toggle('hidden', tab !== 'form');
 };
 
+// ─── MOBILE SIDEBAR ──────────────────────────────────────────────────────────
+window.openMobileSidebar = function() {
+    document.getElementById('sidebar').classList.add('mobile-open');
+    document.getElementById('sidebarOverlay').style.display = 'block';
+    lucide.createIcons();
+};
+window.closeMobileSidebar = function() {
+    document.getElementById('sidebar').classList.remove('mobile-open');
+    document.getElementById('sidebarOverlay').style.display = 'none';
+};
+
+// Close sidebar when nav link clicked on mobile
+document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+        if (window.innerWidth < 768) closeMobileSidebar();
+    });
+});
+
+// ─── BOTTOM NAV SYNC ─────────────────────────────────────────────────────────
+window.setBottomNav = function(pageId) {
+    document.querySelectorAll('#bottomNav .bn-item').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.page === pageId);
+    });
+};
+
 // ─── TOAST ────────────────────────────────────────────────────────────────────
 window.showToast = function(msg) {
     const t = document.getElementById('toast');
@@ -2130,6 +2246,13 @@ window.showToast = function(msg) {
 };
 
 lucide.createIcons();
+
+// ─── SERVICE WORKER ───────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+}
 </script>
 </body>
 </html>
