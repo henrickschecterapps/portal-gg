@@ -7,6 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
@@ -112,6 +115,52 @@
         .detail-row:last-child{border-bottom:none}
         .detail-row .dk{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#94a3b8}
         .detail-row .dv{font-size:13px;color:#1e293b;font-weight:500}
+
+        /* Priority badges */
+        .prio-urgente{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+        .prio-alta{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
+        .prio-normal{background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd}
+        .prio-baixa{background:#f8fafc;color:#64748b;border:1px solid #e2e8f0}
+
+        /* Checklist */
+        .checklist-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f1f5f9}
+        .checklist-item:last-child{border-bottom:none}
+        .checklist-item input[type=checkbox]{width:15px;height:15px;accent-color:#1a56db;cursor:pointer;flex-shrink:0}
+        .checklist-item label{font-size:13px;color:#334155;cursor:pointer;flex:1}
+        .checklist-item label.done{text-decoration:line-through;color:#94a3b8}
+        .checklist-item .del-item{background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:16px;padding:0 2px;line-height:1}
+        .checklist-item .del-item:hover{color:#ef4444}
+
+        /* Timeline */
+        .timeline-item{display:flex;gap:10px;padding:6px 0;position:relative}
+        .timeline-item::before{content:'';position:absolute;left:7px;top:20px;bottom:-6px;width:1px;background:#e2e8f0}
+        .timeline-item:last-child::before{display:none}
+        .tl-dot{width:15px;height:15px;border-radius:50%;flex-shrink:0;margin-top:2px;border:2px solid white;box-shadow:0 0 0 1px #e2e8f0}
+
+        /* Mention autocomplete */
+        .mention-popup{position:absolute;background:white;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.1);z-index:100;min-width:180px;overflow:hidden;display:none}
+        .mention-item{padding:7px 12px;font-size:13px;cursor:pointer;color:#1e293b}
+        .mention-item:hover,.mention-item.selected{background:#f0f6ff;color:#1a56db}
+
+        /* List view */
+        .list-view-table{width:100%;border-collapse:collapse}
+        .list-view-table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#94a3b8;padding:9px 12px;text-align:left;border-bottom:1px solid #e2e8f0;cursor:pointer;user-select:none;white-space:nowrap}
+        .list-view-table th:hover{color:#475569}
+        .list-view-table th .sort-icon{margin-left:4px;opacity:.4}
+        .list-view-table th.sort-asc .sort-icon::after{content:'↑'}
+        .list-view-table th.sort-desc .sort-icon::after{content:'↓'}
+        .list-view-table th:not(.sort-asc):not(.sort-desc) .sort-icon::after{content:'↕'}
+        .list-view-table td{padding:10px 12px;font-size:13px;border-bottom:1px solid #f1f5f9;color:#475569;vertical-align:middle}
+        .list-view-table tr:hover td{background:#f8fafc;cursor:pointer}
+
+        /* Keyboard shortcut hint */
+        .kbd{display:inline-flex;align-items:center;justify-content:center;background:#f1f5f9;border:1px solid #e2e8f0;border-bottom-width:2px;border-radius:4px;font-size:10px;font-family:monospace;color:#475569;padding:1px 5px;line-height:1.5}
+
+        /* View toggle */
+        .view-toggle-btn{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;border:none}
+        .view-toggle-btn.active{background:#1e293b;color:white}
+        .view-toggle-btn:not(.active){background:transparent;color:#64748b}
+        .view-toggle-btn:not(.active):hover{background:#f1f5f9}
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans antialiased h-screen flex overflow-hidden">
@@ -271,9 +320,18 @@
         <button class="filter-btn px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="td">Treinamento</button>
         <button class="filter-btn px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="dp">Depto. Pessoal</button>
         <button class="filter-btn px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap" data-filter="clima">Comunicados</button>
+        <div class="ml-1 h-4 w-px bg-slate-200 flex-shrink-0"></div>
+        <button class="filter-btn px-3 py-1 rounded-full text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors whitespace-nowrap" data-prio-filter="urgente">🔴 Urgente</button>
+        <button class="filter-btn px-3 py-1 rounded-full text-xs font-medium bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors whitespace-nowrap" data-prio-filter="alta">🟠 Alta</button>
+        <div class="flex-1"></div>
+        <div class="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5 flex-shrink-0">
+            <button class="view-toggle-btn active" id="btnViewKanban" onclick="setView('kanban')"><i data-lucide="kanban-square" class="w-3.5 h-3.5"></i> Quadro</button>
+            <button class="view-toggle-btn" id="btnViewList" onclick="setView('list')"><i data-lucide="list" class="w-3.5 h-3.5"></i> Lista</button>
+        </div>
     </div>
 
-    <div class="flex-1 overflow-x-auto overflow-y-hidden">
+    <!-- Quadro kanban -->
+    <div id="kanbanBoard" class="flex-1 overflow-x-auto overflow-y-hidden">
         <div class="h-full flex gap-4 p-4 min-w-max items-start">
 
             <!-- Col Novas -->
@@ -314,6 +372,28 @@
 
         </div>
     </div>
+
+    <!-- Modo lista -->
+    <div id="listView" class="flex-1 overflow-y-auto p-4 hidden">
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="list-view-table" id="listViewTable">
+                    <thead><tr>
+                        <th data-col="ticketId">ID <span class="sort-icon"></span></th>
+                        <th data-col="prioridade">Prio <span class="sort-icon"></span></th>
+                        <th data-col="titulo">Título <span class="sort-icon"></span></th>
+                        <th data-col="categoria">Categoria <span class="sort-icon"></span></th>
+                        <th data-col="solicitanteNome">Solicitante <span class="sort-icon"></span></th>
+                        <th data-col="responsavel">Responsável <span class="sort-icon"></span></th>
+                        <th data-col="status">Status <span class="sort-icon"></span></th>
+                        <th data-col="sla">SLA <span class="sort-icon"></span></th>
+                        <th data-col="dataCriacao">Criado <span class="sort-icon"></span></th>
+                    </tr></thead>
+                    <tbody id="listViewBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- ===== DIRECTORY ===== -->
@@ -337,6 +417,18 @@
         <div class="stat-card"><h3 class="font-bold text-slate-700 text-sm mb-1">SLA Global</h3><p class="text-4xl font-extrabold text-emerald-600" id="rep-sla">—%</p><p class="text-xs text-slate-500 mt-1">tickets dentro do prazo</p></div>
         <div class="stat-card"><h3 class="font-bold text-slate-700 text-sm mb-1">Concluídos (30d)</h3><p class="text-4xl font-extrabold text-brand-600" id="rep-done">—</p></div>
         <div class="stat-card"><h3 class="font-bold text-slate-700 text-sm mb-1">Em aberto agora</h3><p class="text-4xl font-extrabold text-amber-600" id="rep-open">—</p></div>
+    </div>
+
+    <div class="flex items-center justify-between">
+        <h3 class="font-bold text-slate-700 text-sm">Exportar relatório</h3>
+        <div class="flex gap-2">
+            <button onclick="exportXLSX()" class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-colors">
+                <i data-lucide="table" class="w-3.5 h-3.5"></i> Excel (.xlsx)
+            </button>
+            <button onclick="exportPDF()" class="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition-colors">
+                <i data-lucide="file-text" class="w-3.5 h-3.5"></i> PDF
+            </button>
+        </div>
     </div>
 
     <!-- Ranking detalhado -->
@@ -504,15 +596,14 @@
             <div class="flex items-center gap-2">
                 <span id="tModalId" class="text-xs font-mono text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200"></span>
                 <span id="tModalBadge" class="badge"></span>
+                <span id="tModalPrioBadge" class="badge"></span>
             </div>
             <button onclick="closeTicketModal()" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-lg transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
         </div>
-
         <div class="flex-1 overflow-y-auto p-5">
             <h2 id="tModalTitle" class="text-xl font-bold text-slate-900 mb-4"></h2>
-
-            <div class="mb-5 p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-3">
-                <div class="flex-1">
+            <div class="mb-5 p-3.5 bg-slate-50 rounded-xl border border-slate-200 grid grid-cols-2 gap-3">
+                <div>
                     <p class="f-label mb-1">Status</p>
                     <select id="tModalStatus" onchange="updateTicketStatus()" class="f-input text-sm font-semibold">
                         <option value="novas">📥 Novas (Triagem)</option>
@@ -521,15 +612,26 @@
                         <option value="concluido">✅ Concluído</option>
                     </select>
                 </div>
-                <div class="flex-1">
+                <div>
                     <p class="f-label mb-1">Responsável G&G</p>
                     <select id="tModalResponsavel" onchange="updateTicketResponsavel()" class="f-input text-sm font-semibold text-brand-700">
                         <option value="">Não atribuído</option>
                     </select>
                 </div>
+                <div>
+                    <p class="f-label mb-1">Prioridade</p>
+                    <select id="tModalPrioridade" onchange="updateTicketPrioridade()" class="f-input text-sm font-semibold">
+                        <option value="normal">🔵 Normal</option>
+                        <option value="alta">🟠 Alta</option>
+                        <option value="urgente">🔴 Urgente</option>
+                        <option value="baixa">⚪ Baixa</option>
+                    </select>
+                </div>
+                <div>
+                    <p class="f-label mb-1">Data-alvo</p>
+                    <input type="date" id="tModalDeadline" onchange="updateTicketDeadline()" class="f-input text-sm">
+                </div>
             </div>
-
-            <!-- Dados do Solicitante -->
             <div class="mb-4">
                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Solicitante</h4>
                 <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -541,21 +643,28 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Dados específicos do ticket -->
             <div id="tModalDetails" class="mb-4 space-y-0 bg-slate-50 rounded-xl border border-slate-100 divide-y divide-slate-100 px-4"></div>
-
-            <!-- Comentário -->
             <div class="mt-4">
+                <div class="flex items-center justify-between mb-2">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Checklist <span id="checklistProgress" class="text-brand-600 normal-case font-normal ml-1"></span></h4>
+                </div>
+                <div id="checklistItems" class="mb-2 space-y-0 bg-slate-50 rounded-xl border border-slate-100 px-3 py-1 min-h-8"></div>
+                <div class="flex gap-2 mt-2">
+                    <input type="text" id="newCheckItem" placeholder="Adicionar item..." class="f-input text-sm flex-1" onkeydown="if(event.key==='Enter')addChecklistItem()">
+                    <button onclick="addChecklistItem()" class="text-xs font-semibold text-brand-600 hover:text-brand-700 px-3 py-2 bg-brand-50 rounded-lg transition-colors">+ Adicionar</button>
+                </div>
+            </div>
+            <div class="mt-4" style="position:relative">
                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Comentário / Atualização</h4>
-                <textarea id="tModalComment" rows="3" placeholder="Escreva uma atualização para o solicitante..." class="f-input text-sm resize-none"></textarea>
+                <div style="position:relative">
+                    <textarea id="tModalComment" rows="3" placeholder="Escreva uma atualização... use @nome para mencionar alguém" class="f-input text-sm resize-none"></textarea>
+                    <div id="mentionPopup" class="mention-popup"></div>
+                </div>
                 <button onclick="saveComment()" class="mt-2 text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors">Salvar comentário →</button>
             </div>
-
-            <!-- Histórico de comentários -->
             <div class="mt-4" id="tModalCommentHistory"></div>
+            <div class="mt-4" id="tModalTimeline"></div>
         </div>
-
         <div class="p-4 border-t border-slate-200 flex gap-2 justify-end flex-shrink-0">
             <button onclick="rejectCurrentTicket()" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Rejeitar</button>
             <button onclick="closeTicketModal()" class="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors flex items-center gap-1.5">
@@ -591,6 +700,26 @@
         <div class="flex gap-2 justify-end mt-4">
             <button onclick="document.getElementById('newTicketModal').classList.remove('open')" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg">Cancelar</button>
             <button onclick="createManualTicket()" class="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg flex items-center gap-1.5"><i data-lucide="plus" class="w-4 h-4"></i> Criar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== ATALHOS ===================== -->
+<div id="shortcutsModal" class="center-modal">
+    <div class="center-modal-box p-6" style="max-width:420px">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-slate-800">Atalhos de teclado</h3>
+            <button onclick="document.getElementById('shortcutsModal').classList.remove('open')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <div class="space-y-2 text-sm">
+            <div class="flex items-center justify-between py-2 border-b border-slate-100"><span class="text-slate-600">Novo ticket</span><span class="kbd">N</span></div>
+            <div class="flex items-center justify-between py-2 border-b border-slate-100"><span class="text-slate-600">Buscar</span><span class="kbd">/</span></div>
+            <div class="flex items-center justify-between py-2 border-b border-slate-100"><span class="text-slate-600">Fechar modal / painel</span><span class="kbd">Esc</span></div>
+            <div class="flex items-center justify-between py-2 border-b border-slate-100"><span class="text-slate-600">Dashboard</span><span class="kbd">1</span></div>
+            <div class="flex items-center justify-between py-2 border-b border-slate-100"><span class="text-slate-600">Quadro kanban</span><span class="kbd">2</span></div>
+            <div class="flex items-center justify-between py-2 border-b border-slate-100"><span class="text-slate-600">Relatórios</span><span class="kbd">3</span></div>
+            <div class="flex items-center justify-between py-2 border-b border-slate-100"><span class="text-slate-600">Alternar vista lista/quadro</span><span class="kbd">V</span></div>
+            <div class="flex items-center justify-between py-2"><span class="text-slate-600">Mostrar esta ajuda</span><span class="kbd">?</span></div>
         </div>
     </div>
 </div>
@@ -886,26 +1015,40 @@ function getSLALabel(ticket) {
     return { label: `SLA: ${Math.round(diffH)}h restantes`, cls: 'text-emerald-600' };
 }
 
+function prioMeta(p) {
+    return { urgente:{label:'🔴 Urgente',cls:'prio-urgente'}, alta:{label:'🟠 Alta',cls:'prio-alta'}, baixa:{label:'⚪ Baixa',cls:'prio-baixa'} }[p] || {label:'🔵 Normal',cls:'prio-normal'};
+}
+
 function buildCardHTML(ticket) {
     const style = catStyle(ticket.categoria);
     const sla   = getSLALabel(ticket);
+    const prio  = prioMeta(ticket.prioridade);
     const created = ticket.dataCriacao?.toDate
         ? ticket.dataCriacao.toDate().toLocaleDateString('pt-BR')
         : '—';
     const initials = (ticket.solicitanteNome || '??').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
     const responsavel = ticket.responsavel ? `<span class="text-[10px] text-brand-600 font-semibold">${ticket.responsavel}</span>` : '';
     const titlePreview = ticket.titulo || ticket.title || (ticket.rs_cargo || ticket.td_tema || ticket.dp_categoria || 'Sem título');
+    const checklistArr = ticket.checklist || [];
+    const checkDone = checklistArr.filter(i=>i.done).length;
+    const checkTotal = checklistArr.length;
+    const checkHtml = checkTotal ? `<span class="text-[10px] text-slate-400 ml-1">✓ ${checkDone}/${checkTotal}</span>` : '';
+    const deadlineHtml = ticket.dataAlvo ? `<span class="text-[10px] text-slate-500">📅 ${ticket.dataAlvo}</span>` : '';
 
     return `
     <div class="kanban-card bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand-300 ${ticket.status==='concluido'?'opacity-70':''}"
-         draggable="true" data-type="${ticket.categoria}" data-id="${ticket._docId}"
+         draggable="true" data-type="${ticket.categoria}" data-prio="${ticket.prioridade||'normal'}" data-id="${ticket._docId}"
          onclick="openTicket('${ticket._docId}')">
-        <div class="flex justify-between items-start mb-2">
-            <span class="badge ${style.cls}">${style.label}</span>
-            <span class="text-[10px] text-slate-400 font-mono">#${ticket.ticketId || ticket._docId.slice(-4)}</span>
+        <div class="flex justify-between items-start mb-1.5">
+            <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="badge ${style.cls}">${style.label}</span>
+                ${ticket.prioridade && ticket.prioridade !== 'normal' ? `<span class="badge ${prio.cls}" style="font-size:10px;padding:1px 6px">${prio.label}</span>` : ''}
+            </div>
+            <span class="text-[10px] text-slate-400 font-mono flex-shrink-0">#${ticket.ticketId || ticket._docId.slice(-4)}</span>
         </div>
         <h3 class="font-semibold text-slate-800 text-xs mb-1 leading-snug line-clamp-2 ${ticket.status==='concluido'?'line-through text-slate-500':''}">${titlePreview}</h3>
-        <p class="text-[11px] text-slate-400 mb-2">${ticket.solicitanteNome || '—'} · ${ticket.areaSolicitante || '—'}</p>
+        <p class="text-[11px] text-slate-400 mb-1">${ticket.solicitanteNome || '—'} · ${ticket.areaSolicitante || '—'}</p>
+        ${(deadlineHtml || checkHtml) ? `<div class="flex items-center gap-2 mb-1">${deadlineHtml}${checkHtml}</div>` : ''}
         <div class="flex items-center justify-between mt-auto pt-1.5 border-t border-slate-100">
             <div class="flex items-center gap-1.5">
                 <div class="w-5 h-5 rounded-full bg-brand-100 flex items-center justify-center text-[9px] font-bold text-brand-700">${initials}</div>
@@ -935,6 +1078,7 @@ function renderAllColumns() {
 
     updateColCounts();
     initDnD();
+    if (currentView === 'list') renderListView();
     lucide.createIcons();
 }
 
@@ -1003,26 +1147,31 @@ window.openTicket = function(docId) {
     currentTicketId = docId;
 
     const style = catStyle(t.categoria);
+    const prio  = prioMeta(t.prioridade);
     document.getElementById('tModalId').textContent    = '#' + (t.ticketId || docId.slice(-6).toUpperCase());
     document.getElementById('tModalBadge').textContent = style.label;
     document.getElementById('tModalBadge').className   = 'badge ' + style.cls;
+    document.getElementById('tModalPrioBadge').textContent = prio.label;
+    document.getElementById('tModalPrioBadge').className   = 'badge ' + prio.cls;
     document.getElementById('tModalTitle').textContent = t.titulo || t.title || t.rs_cargo || t.td_tema || 'Ticket';
     document.getElementById('tModalStatus').value      = t.status || 'novas';
     document.getElementById('tModalResponsavel').value = t.responsavel || '';
+    document.getElementById('tModalPrioridade').value  = t.prioridade || 'normal';
+    document.getElementById('tModalDeadline').value    = t.dataAlvo || '';
 
     // Solicitante
     const initials = (t.solicitanteNome || '??').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
-    document.getElementById('tModalAvatar').textContent     = initials;
+    document.getElementById('tModalAvatar').textContent      = initials;
     document.getElementById('tModalSolicitante').textContent = t.solicitanteNome || '—';
     document.getElementById('tModalEmail').textContent       = t.solicitanteEmail || '—';
     document.getElementById('tModalArea').textContent        = t.areaSolicitante ? 'Área: ' + t.areaSolicitante : '';
 
-    // Details specific to category
-    const detailsEl = document.getElementById('tModalDetails');
-    detailsEl.innerHTML = buildTicketDetails(t);
+    document.getElementById('tModalDetails').innerHTML = buildTicketDetails(t);
 
-    // Comments
+    renderChecklist(t);
     renderCommentHistory(t);
+    renderTimeline(t);
+    initMentions();
 
     document.getElementById('ticketModal').classList.add('open');
     lucide.createIcons();
@@ -1076,22 +1225,147 @@ function renderCommentHistory(t) {
     const el = document.getElementById('tModalCommentHistory');
     if (!comments.length) { el.innerHTML = ''; return; }
     el.innerHTML = `
-        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 mt-2">Histórico</h4>
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 mt-2">Histórico de comentários</h4>
         <div class="space-y-2">
-            ${comments.map(c => `
-                <div class="bg-slate-50 rounded-lg p-3 border border-slate-100">
+            ${comments.map(c => {
+                const texto = (c.texto||'').replace(/@([\w\s]+)/g, '<span class="text-brand-600 font-semibold">@$1</span>');
+                return `<div class="bg-slate-50 rounded-lg p-3 border border-slate-100">
                     <p class="text-xs text-slate-700 font-semibold">${c.autor || '—'}</p>
-                    <p class="text-xs text-slate-600 mt-0.5">${c.texto}</p>
+                    <p class="text-xs text-slate-600 mt-0.5">${texto}</p>
                     <p class="text-[10px] text-slate-400 mt-1">${c.data || ''}</p>
+                </div>`;
+            }).join('')}
+        </div>`;
+}
+
+// ─── TIMELINE ────────────────────────────────────────────────────────────────
+function renderTimeline(t) {
+    const events = t.historico || [];
+    const el = document.getElementById('tModalTimeline');
+    if (!events.length) { el.innerHTML = ''; return; }
+    const dotColor = { novas:'#3b82f6', andamento:'#f59e0b', aguardando:'#a855f7', concluido:'#10b981', rejeitado:'#ef4444' };
+    const statusLabelMap = { novas:'Triagem', andamento:'Em Execução', aguardando:'Aguardando', concluido:'Concluído', rejeitado:'Rejeitado' };
+    el.innerHTML = `
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 mt-2">Linha do tempo</h4>
+        <div class="pl-1">
+            ${events.map(e => `
+                <div class="timeline-item">
+                    <div class="tl-dot" style="background:${dotColor[e.para]||'#94a3b8'}"></div>
+                    <div class="flex-1 pb-1">
+                        <p class="text-xs font-semibold text-slate-700">${statusLabelMap[e.para]||e.para}</p>
+                        <p class="text-[10px] text-slate-400">${e.autor||'—'} · ${e.data||''}</p>
+                    </div>
                 </div>`).join('')}
         </div>`;
 }
 
+// ─── CHECKLIST ───────────────────────────────────────────────────────────────
+function renderChecklist(t) {
+    const items = t.checklist || [];
+    const done = items.filter(i=>i.done).length;
+    document.getElementById('checklistProgress').textContent = items.length ? `${done}/${items.length}` : '';
+    const el = document.getElementById('checklistItems');
+    if (!items.length) { el.innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum item ainda.</p>'; return; }
+    el.innerHTML = items.map((item, idx) => `
+        <div class="checklist-item">
+            <input type="checkbox" id="chk-${idx}" ${item.done?'checked':''} onchange="toggleCheckItem(${idx})">
+            <label for="chk-${idx}" class="${item.done?'done':''}">${item.texto}</label>
+            <button class="del-item" onclick="deleteCheckItem(${idx})">×</button>
+        </div>`).join('');
+}
+
+window.addChecklistItem = async function() {
+    const input = document.getElementById('newCheckItem');
+    const texto = input.value.trim();
+    if (!texto || !currentTicketId) return;
+    const t = allTickets[currentTicketId];
+    const checklist = [...(t.checklist||[]), { texto, done: false }];
+    try {
+        await updateDoc(doc(db, 'tickets', currentTicketId), { checklist });
+        input.value = '';
+        showToast('Item adicionado!');
+    } catch(e) { showToast('Erro: ' + e.message); }
+};
+
+window.toggleCheckItem = async function(idx) {
+    if (!currentTicketId) return;
+    const t = allTickets[currentTicketId];
+    const checklist = (t.checklist||[]).map((item,i) => i===idx ? {...item, done:!item.done} : item);
+    try { await updateDoc(doc(db, 'tickets', currentTicketId), { checklist }); }
+    catch(e) { showToast('Erro: ' + e.message); }
+};
+
+window.deleteCheckItem = async function(idx) {
+    if (!currentTicketId) return;
+    const t = allTickets[currentTicketId];
+    const checklist = (t.checklist||[]).filter((_,i) => i!==idx);
+    try {
+        await updateDoc(doc(db, 'tickets', currentTicketId), { checklist });
+        showToast('Item removido.');
+    } catch(e) { showToast('Erro: ' + e.message); }
+};
+
+// ─── MENTIONS ────────────────────────────────────────────────────────────────
+function initMentions() {
+    const textarea = document.getElementById('tModalComment');
+    const popup    = document.getElementById('mentionPopup');
+    let mentionStart = -1;
+    let selectedIdx  = 0;
+
+    textarea.addEventListener('input', () => {
+        const val = textarea.value;
+        const pos = textarea.selectionStart;
+        const before = val.slice(0, pos);
+        const match = before.match(/@(\w*)$/);
+        if (match) {
+            mentionStart = pos - match[0].length;
+            const query = match[1].toLowerCase();
+            const hits = teamMembers.filter(m => m.nome.toLowerCase().includes(query)).slice(0,5);
+            if (hits.length) {
+                popup.innerHTML = hits.map((m,i) => `<div class="mention-item ${i===0?'selected':''}" data-name="${m.nome}" onmousedown="insertMention('${m.nome}')">${m.nome}</div>`).join('');
+                popup.style.display = 'block';
+                selectedIdx = 0;
+            } else { popup.style.display = 'none'; }
+        } else { popup.style.display = 'none'; mentionStart = -1; }
+    });
+
+    textarea.addEventListener('keydown', e => {
+        if (popup.style.display === 'none') return;
+        const items = popup.querySelectorAll('.mention-item');
+        if (e.key === 'ArrowDown') { e.preventDefault(); selectedIdx = (selectedIdx+1)%items.length; items.forEach((el,i)=>el.classList.toggle('selected',i===selectedIdx)); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); selectedIdx = (selectedIdx-1+items.length)%items.length; items.forEach((el,i)=>el.classList.toggle('selected',i===selectedIdx)); }
+        else if (e.key === 'Enter' || e.key === 'Tab') { if(items[selectedIdx]){ e.preventDefault(); insertMention(items[selectedIdx].dataset.name); } }
+        else if (e.key === 'Escape') { popup.style.display = 'none'; }
+    });
+
+    document.addEventListener('click', e => { if (!popup.contains(e.target)) popup.style.display = 'none'; }, true);
+}
+
+window.insertMention = function(name) {
+    const textarea = document.getElementById('tModalComment');
+    const popup    = document.getElementById('mentionPopup');
+    const val = textarea.value;
+    const pos = textarea.selectionStart;
+    const before = val.slice(0, pos);
+    const after  = val.slice(pos);
+    const atPos  = before.lastIndexOf('@');
+    textarea.value = before.slice(0, atPos) + '@' + name + ' ' + after;
+    textarea.focus();
+    popup.style.display = 'none';
+};
+
+// ─── TICKET UPDATE FUNCTIONS ─────────────────────────────────────────────────
 window.updateTicketStatus = async function() {
     if (!currentTicketId) return;
     const newStatus = document.getElementById('tModalStatus').value;
+    const t = allTickets[currentTicketId];
+    const historico = [...(t.historico||[]), {
+        de: t.status, para: newStatus,
+        autor: currentUserData?.nome || 'G&G',
+        data: new Date().toLocaleString('pt-BR')
+    }];
     try {
-        await updateDoc(doc(db, 'tickets', currentTicketId), { status: newStatus });
+        await updateDoc(doc(db, 'tickets', currentTicketId), { status: newStatus, historico });
         showToast('Status atualizado!');
     } catch(e) { showToast('Erro: ' + e.message); }
 };
@@ -1105,22 +1379,38 @@ window.updateTicketResponsavel = async function() {
     } catch(e) { showToast('Erro: ' + e.message); }
 };
 
+window.updateTicketPrioridade = async function() {
+    if (!currentTicketId) return;
+    const prio = document.getElementById('tModalPrioridade').value;
+    try {
+        await updateDoc(doc(db, 'tickets', currentTicketId), { prioridade: prio });
+        showToast('Prioridade atualizada!');
+    } catch(e) { showToast('Erro: ' + e.message); }
+};
+
+window.updateTicketDeadline = async function() {
+    if (!currentTicketId) return;
+    const dataAlvo = document.getElementById('tModalDeadline').value;
+    try {
+        await updateDoc(doc(db, 'tickets', currentTicketId), { dataAlvo });
+        showToast('Data-alvo salva!');
+    } catch(e) { showToast('Erro: ' + e.message); }
+};
+
 window.saveComment = async function() {
     if (!currentTicketId) return;
     const text = document.getElementById('tModalComment').value.trim();
     if (!text) return;
-
     const t = allTickets[currentTicketId];
-    const comments = t.comentarios || [];
-    comments.push({
+    const comments = [...(t.comentarios||[]), {
         autor: currentUserData?.nome || 'G&G',
         texto: text,
         data: new Date().toLocaleString('pt-BR'),
-    });
-
+    }];
     try {
         await updateDoc(doc(db, 'tickets', currentTicketId), { comentarios: comments });
         document.getElementById('tModalComment').value = '';
+        document.getElementById('mentionPopup').style.display = 'none';
         showToast('Comentário salvo!');
     } catch(e) { showToast('Erro: ' + e.message); }
 };
@@ -1128,8 +1418,14 @@ window.saveComment = async function() {
 window.rejectCurrentTicket = async function() {
     if (!currentTicketId) return;
     if (!confirm('Rejeitar esta solicitação?')) return;
+    const t = allTickets[currentTicketId];
+    const historico = [...(t.historico||[]), {
+        de: t.status, para: 'rejeitado',
+        autor: currentUserData?.nome || 'G&G',
+        data: new Date().toLocaleString('pt-BR')
+    }];
     try {
-        await updateDoc(doc(db, 'tickets', currentTicketId), { status: 'rejeitado' });
+        await updateDoc(doc(db, 'tickets', currentTicketId), { status: 'rejeitado', historico });
         showToast('Solicitação rejeitada.');
         closeTicketModal();
     } catch(e) { showToast('Erro: ' + e.message); }
@@ -1137,11 +1433,15 @@ window.rejectCurrentTicket = async function() {
 
 window.closeTicketModal = function() {
     document.getElementById('ticketModal').classList.remove('open');
+    document.getElementById('mentionPopup').style.display = 'none';
     currentTicketId = null;
 };
 
 document.getElementById('ticketModal').addEventListener('click', e => {
     if (e.target === document.getElementById('ticketModal')) closeTicketModal();
+});
+document.getElementById('shortcutsModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('shortcutsModal')) document.getElementById('shortcutsModal').classList.remove('open');
 });
 
 // ─── CREATE MANUAL TICKET ────────────────────────────────────────────────────
@@ -1546,6 +1846,193 @@ window.revokeUser = async function(uid) {
     loadAdminUsers();
     loadTeamMembers();
 };
+
+// ─── VIEW TOGGLE (Kanban / Lista) ────────────────────────────────────────────
+let currentView = 'kanban';
+let listSortCol = 'dataCriacao';
+let listSortDir = 'desc';
+
+window.setView = function(view) {
+    currentView = view;
+    document.getElementById('kanbanBoard').classList.toggle('hidden', view !== 'kanban');
+    document.getElementById('listView').classList.toggle('hidden', view !== 'list');
+    document.getElementById('btnViewKanban').classList.toggle('active', view === 'kanban');
+    document.getElementById('btnViewList').classList.toggle('active', view === 'list');
+    if (view === 'list') renderListView();
+};
+
+function renderListView() {
+    const list = Object.values(allTickets);
+    const statusMap = { novas:'Triagem', andamento:'Em Execução', aguardando:'Aguardando', concluido:'Concluído', rejeitado:'Rejeitado' };
+    const sorted = [...list].sort((a, b) => {
+        let va = a[listSortCol] || '', vb = b[listSortCol] || '';
+        if (listSortCol === 'dataCriacao') {
+            va = a.dataCriacao?.toDate ? a.dataCriacao.toDate().getTime() : 0;
+            vb = b.dataCriacao?.toDate ? b.dataCriacao.toDate().getTime() : 0;
+        }
+        return listSortDir === 'asc' ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+    });
+
+    document.getElementById('listViewBody').innerHTML = sorted.map(t => {
+        const style  = catStyle(t.categoria);
+        const sla    = getSLALabel(t);
+        const prio   = prioMeta(t.prioridade);
+        const date   = t.dataCriacao?.toDate ? t.dataCriacao.toDate().toLocaleDateString('pt-BR') : '—';
+        return `<tr onclick="openTicket('${t._docId}')" style="cursor:pointer">
+            <td class="font-mono text-slate-400 text-xs">#${t.ticketId||t._docId.slice(-4)}</td>
+            <td><span class="badge ${prio.cls}" style="font-size:10px">${prio.label}</span></td>
+            <td class="font-medium text-slate-700 max-w-[220px] truncate">${t.titulo||t.rs_cargo||t.td_tema||'—'}</td>
+            <td><span class="badge ${style.cls}">${style.label}</span></td>
+            <td>${t.solicitanteNome||'—'}</td>
+            <td>${t.responsavel||'<span class="text-slate-300">—</span>'}</td>
+            <td><span class="badge bg-slate-100 text-slate-600">${statusMap[t.status]||t.status}</span></td>
+            <td><span class="text-xs font-semibold ${sla.cls}">${sla.label}</span></td>
+            <td class="text-slate-400 text-xs">${date}</td>
+        </tr>`;
+    }).join('') || '<tr><td colspan="9" class="text-center text-slate-400 py-8">Nenhum ticket.</td></tr>';
+
+    // Sort headers
+    document.querySelectorAll('#listViewTable th[data-col]').forEach(th => {
+        th.classList.remove('sort-asc','sort-desc');
+        if (th.dataset.col === listSortCol) th.classList.add(listSortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+        th.onclick = () => {
+            if (listSortCol === th.dataset.col) listSortDir = listSortDir === 'asc' ? 'desc' : 'asc';
+            else { listSortCol = th.dataset.col; listSortDir = 'asc'; }
+            renderListView();
+        };
+    });
+}
+
+// ─── EXPORT XLSX ─────────────────────────────────────────────────────────────
+window.exportXLSX = function() {
+    const list = Object.values(allTickets);
+    const statusMap = { novas:'Triagem', andamento:'Em Execução', aguardando:'Aguardando', concluido:'Concluído', rejeitado:'Rejeitado' };
+    const catLabelMap = { rs:'Recrutamento', td:'Treinamento', dp:'Depto. Pessoal', clima:'Comunicados' };
+    const prioLabel = { urgente:'Urgente', alta:'Alta', normal:'Normal', baixa:'Baixa' };
+
+    const rows = list.map(t => ({
+        'ID':            '#' + (t.ticketId||t._docId.slice(-4)),
+        'Título':        t.titulo||t.rs_cargo||t.td_tema||'—',
+        'Categoria':     catLabelMap[t.categoria]||t.categoria,
+        'Prioridade':    prioLabel[t.prioridade]||'Normal',
+        'Status':        statusMap[t.status]||t.status,
+        'Solicitante':   t.solicitanteNome||'—',
+        'Área':          t.areaSolicitante||'—',
+        'Responsável':   t.responsavel||'—',
+        'Data-alvo':     t.dataAlvo||'—',
+        'Criado em':     t.dataCriacao?.toDate ? t.dataCriacao.toDate().toLocaleDateString('pt-BR') : '—',
+        'SLA':           getSLALabel(t).label,
+        'Checklist':     (t.checklist||[]).length ? `${(t.checklist||[]).filter(i=>i.done).length}/${(t.checklist||[]).length}` : '—',
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+    // Column widths
+    ws['!cols'] = [8,36,18,12,16,22,18,22,12,14,22,12].map(w=>({wch:w}));
+    XLSX.utils.book_append_sheet(wb, ws, 'Tickets');
+    XLSX.writeFile(wb, `GG_Tickets_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`);
+    showToast('Excel exportado!');
+};
+
+// ─── EXPORT PDF ──────────────────────────────────────────────────────────────
+window.exportPDF = function() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const list = Object.values(allTickets);
+    const statusMap = { novas:'Triagem', andamento:'Em Execução', aguardando:'Aguardando', concluido:'Concluído', rejeitado:'Rejeitado' };
+    const catLabelMap = { rs:'Recrutamento', td:'Treinamento', dp:'Depto. Pessoal', clima:'Comunicados' };
+
+    // Header
+    doc.setFillColor(26, 86, 219);
+    doc.rect(0, 0, 297, 18, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(13);
+    doc.setFont('helvetica','bold');
+    doc.text('Tripla G&G — Relatório de Tickets', 14, 12);
+    doc.setFontSize(9);
+    doc.setFont('helvetica','normal');
+    doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, 230, 12);
+
+    // Table
+    doc.autoTable({
+        startY: 22,
+        head: [['ID','Título','Categoria','Prioridade','Status','Solicitante','Responsável','SLA','Criado']],
+        body: list.map(t => [
+            '#'+(t.ticketId||t._docId.slice(-4)),
+            (t.titulo||t.rs_cargo||t.td_tema||'—').slice(0,40),
+            catLabelMap[t.categoria]||t.categoria,
+            t.prioridade||'Normal',
+            statusMap[t.status]||t.status,
+            t.solicitanteNome||'—',
+            t.responsavel||'—',
+            getSLALabel(t).label,
+            t.dataCriacao?.toDate ? t.dataCriacao.toDate().toLocaleDateString('pt-BR') : '—',
+        ]),
+        styles: { fontSize: 8, cellPadding: 3 },
+        headStyles: { fillColor: [26,86,219], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [248,250,252] },
+        columnStyles: { 1: { cellWidth: 55 }, 0: { cellWidth: 16 } },
+        margin: { left: 10, right: 10 },
+    });
+
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(148,163,184);
+        doc.text(`Página ${i} de ${pageCount}`, 250, doc.internal.pageSize.height - 6);
+    }
+
+    doc.save(`GG_Tickets_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`);
+    showToast('PDF exportado!');
+};
+
+// ─── KEYBOARD SHORTCUTS ──────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+    const tag = document.activeElement.tagName.toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+    if (e.key === '?') {
+        document.getElementById('shortcutsModal').classList.add('open');
+    } else if (e.key === 'Escape') {
+        document.getElementById('shortcutsModal').classList.remove('open');
+        document.querySelectorAll('.center-modal.open').forEach(m => m.classList.remove('open'));
+        if (currentTicketId) closeTicketModal();
+        closeNotifPanel();
+    } else if (e.key === 'n' || e.key === 'N') {
+        document.getElementById('newTicketModal').classList.add('open');
+        lucide.createIcons();
+    } else if (e.key === '/') {
+        e.preventDefault();
+        document.getElementById('globalSearch').focus();
+    } else if (e.key === '1') {
+        showPage('dashboard');
+    } else if (e.key === '2') {
+        showPage('kanban');
+    } else if (e.key === '3') {
+        showPage('reports');
+    } else if (e.key === 'v' || e.key === 'V') {
+        setView(currentView === 'kanban' ? 'list' : 'kanban');
+    }
+});
+
+// ─── PRIORITY FILTER ────────────────────────────────────────────────────────
+document.querySelectorAll('[data-prio-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const active = btn.classList.contains('filter-prio-active');
+        document.querySelectorAll('[data-prio-filter]').forEach(b => b.classList.remove('filter-prio-active','ring-2','ring-offset-1','ring-brand-400'));
+        if (!active) {
+            btn.classList.add('filter-prio-active','ring-2','ring-offset-1','ring-brand-400');
+            const prio = btn.dataset.prioFilter;
+            document.querySelectorAll('.kanban-card').forEach(card => {
+                card.style.display = (card.dataset.prio === prio) ? '' : 'none';
+            });
+        } else {
+            document.querySelectorAll('.kanban-card').forEach(card => card.style.display = '');
+        }
+    });
+});
 
 // ─── NAVIGATION ──────────────────────────────────────────────────────────────
 const PAGE_META = {

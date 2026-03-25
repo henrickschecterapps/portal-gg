@@ -317,8 +317,8 @@
                         <label class="block text-sm font-semibold text-slate-700 mb-3">Canais de Disparo *</label>
                         <div class="flex flex-wrap gap-3">
                             <label class="relative cursor-pointer"><input type="checkbox" value="email" class="peer sr-only canal-check"><div class="px-4 py-2 rounded-lg border-2 border-slate-200 text-slate-600 bg-white hover:bg-slate-50 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 font-medium text-sm transition-all flex items-center gap-2"><i data-lucide="mail" class="w-4 h-4"></i> E-mail</div></label>
-                            <label class="relative cursor-pointer"><input type="checkbox" value="teams" class="peer sr-only canal-check"><div class="px-4 py-2 rounded-lg border-2 border-slate-200 text-slate-600 bg-white hover:bg-slate-50 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 font-medium text-sm transition-all flex items-center gap-2"><i data-lucide="message-square" class="w-4 h-4"></i> Teams</div></label>
-                            <label class="relative cursor-pointer"><input type="checkbox" value="triplanet" class="peer sr-only canal-check"><div class="px-4 py-2 rounded-lg border-2 border-slate-200 text-slate-600 bg-white hover:bg-slate-50 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 font-medium text-sm transition-all flex items-center gap-2"><i data-lucide="monitor" class="w-4 h-4"></i> Triplanet</div></label>
+                            <label class="relative cursor-pointer"><input type="checkbox" value="slack" class="peer sr-only canal-check"><div class="px-4 py-2 rounded-lg border-2 border-slate-200 text-slate-600 bg-white hover:bg-slate-50 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 font-medium text-sm transition-all flex items-center gap-2"><i data-lucide="message-square" class="w-4 h-4"></i> Slack</div></label>
+                            <label class="relative cursor-pointer"><input type="checkbox" value="intranet" class="peer sr-only canal-check"><div class="px-4 py-2 rounded-lg border-2 border-slate-200 text-slate-600 bg-white hover:bg-slate-50 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 font-medium text-sm transition-all flex items-center gap-2"><i data-lucide="monitor" class="w-4 h-4"></i> Intranet</div></label>
                             <label class="relative cursor-pointer"><input type="checkbox" value="whatsapp" class="peer sr-only canal-check"><div class="px-4 py-2 rounded-lg border-2 border-slate-200 text-slate-600 bg-white hover:bg-slate-50 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 font-medium text-sm transition-all flex items-center gap-2"><i data-lucide="smartphone" class="w-4 h-4"></i> WhatsApp</div></label>
                         </div>
                         <p class="error-msg" id="err-canais">Selecione ao menos um canal.</p>
@@ -532,7 +532,7 @@
 <!-- FIREBASE MODULE -->
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
-    import { getFirestore, collection, addDoc, getDoc, doc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+    import { getFirestore, collection, addDoc, getDoc, getDocs, query, where, doc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 
     const firebaseConfig = {
         apiKey:            "AIzaSyDS7ObifHn2minG2TMcdUGlRyD8SP8vcAs",
@@ -676,5 +676,122 @@
         }
     });
 </script>
+<!-- ===== ACOMPANHAMENTO DE TICKET ===== -->
+<section class="max-w-2xl mx-auto px-4 pb-16 mt-4">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#1a56db" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </div>
+            <div>
+                <h2 class="text-sm font-bold text-slate-800">Acompanhar minha solicitação</h2>
+                <p class="text-xs text-slate-500">Digite o número do ticket que você recebeu ao enviar</p>
+            </div>
+        </div>
+        <div class="px-6 py-4">
+            <div class="flex gap-2">
+                <input type="text" id="trackInput" placeholder="Ex: 8523" maxlength="6"
+                    class="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition-all"
+                    onkeydown="if(event.key==='Enter')trackTicket()">
+                <button onclick="trackTicket()"
+                    class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-xl transition-colors flex-shrink-0">
+                    Buscar
+                </button>
+            </div>
+            <div id="trackResult" class="mt-4 hidden"></div>
+        </div>
+    </div>
+</section>
+
+<script type="module">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
+import { getFirestore, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+
+const firebaseConfig = {
+    apiKey:            "AIzaSyDS7ObifHn2minG2TMcdUGlRyD8SP8vcAs",
+    authDomain:        "tripla-gg-portal.firebaseapp.com",
+    projectId:         "tripla-gg-portal",
+    storageBucket:     "tripla-gg-portal.firebasestorage.app",
+    messagingSenderId: "887500083882",
+    appId:             "1:887500083882:web:05af6ad257ce17fed7b6d3"
+};
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+const statusInfo = {
+    novas:      { label:'Em triagem',        color:'#3b82f6', bg:'#eff6ff', icon:'📥' },
+    andamento:  { label:'Em execução',       color:'#f59e0b', bg:'#fffbeb', icon:'⚙️' },
+    aguardando: { label:'Aguardando',        color:'#a855f7', bg:'#faf5ff', icon:'⏳' },
+    concluido:  { label:'Concluído',         color:'#10b981', bg:'#f0fdf4', icon:'✅' },
+    rejeitado:  { label:'Não aprovado',      color:'#ef4444', bg:'#fef2f2', icon:'❌' },
+};
+const catInfo = {
+    rs:'Recrutamento & Seleção', td:'Treinamento & Desenvolvimento',
+    dp:'Departamento Pessoal',   clima:'Comunicado & Clima Org.',
+};
+
+window.trackTicket = async function() {
+    const id = document.getElementById('trackInput').value.trim();
+    const box = document.getElementById('trackResult');
+    if (!id) return;
+
+    box.classList.remove('hidden');
+    box.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">Buscando...</p>';
+
+    try {
+        const q = query(collection(db, 'tickets'), where('ticketId', '==', id));
+        const snap = await getDocs(q);
+        if (snap.empty) {
+            box.innerHTML = `<div class="text-center py-4">
+                <p class="text-sm font-semibold text-slate-700">Ticket #${id} não encontrado</p>
+                <p class="text-xs text-slate-400 mt-1">Verifique o número e tente novamente</p>
+            </div>`;
+            return;
+        }
+
+        const t = snap.docs[0].data();
+        const s = statusInfo[t.status] || { label: t.status, color:'#64748b', bg:'#f8fafc', icon:'📋' };
+        const comments = (t.comentarios||[]).slice(-3).reverse();
+        const checkDone = (t.checklist||[]).filter(i=>i.done).length;
+        const checkTotal = (t.checklist||[]).length;
+
+        box.innerHTML = `
+            <div class="rounded-xl border border-slate-200 overflow-hidden">
+                <div style="background:${s.bg};border-bottom:1px solid ${s.color}22;padding:14px 16px">
+                    <div class="flex items-center gap-3">
+                        <span style="font-size:24px">${s.icon}</span>
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium">Ticket #${t.ticketId}</p>
+                            <p style="color:${s.color}" class="text-base font-bold">${s.label}</p>
+                        </div>
+                        ${t.responsavel ? `<div class="ml-auto text-right"><p class="text-[10px] text-slate-400">Responsável</p><p class="text-xs font-semibold text-slate-700">${t.responsavel}</p></div>` : ''}
+                    </div>
+                </div>
+                <div class="p-4 space-y-2">
+                    <p class="text-sm font-semibold text-slate-800">${t.titulo||t.rs_cargo||t.td_tema||'Solicitação'}</p>
+                    <div class="flex flex-wrap gap-2 text-xs text-slate-500">
+                        <span class="bg-slate-100 rounded-full px-2 py-0.5">${catInfo[t.categoria]||t.categoria}</span>
+                        ${t.dataAlvo ? `<span class="bg-slate-100 rounded-full px-2 py-0.5">📅 Prazo: ${t.dataAlvo}</span>` : ''}
+                        ${checkTotal ? `<span class="bg-slate-100 rounded-full px-2 py-0.5">✓ ${checkDone}/${checkTotal} etapas</span>` : ''}
+                    </div>
+                    ${comments.length ? `
+                        <div class="mt-3 pt-3 border-t border-slate-100">
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Últimas atualizações</p>
+                            <div class="space-y-2">
+                                ${comments.map(c => `
+                                    <div class="bg-slate-50 rounded-lg p-3">
+                                        <p class="text-[11px] font-semibold text-slate-600">${c.autor||'Equipe G&G'} · <span class="font-normal">${c.data||''}</span></p>
+                                        <p class="text-xs text-slate-700 mt-0.5">${c.texto}</p>
+                                    </div>`).join('')}
+                            </div>
+                        </div>` : '<p class="text-xs text-slate-400 pt-2">Nenhuma atualização ainda — a equipe G&G entrará em contato em breve.</p>'}
+                </div>
+            </div>`;
+    } catch(e) {
+        box.innerHTML = `<p class="text-sm text-red-500 text-center py-3">Erro ao buscar: ${e.message}</p>`;
+    }
+};
+</script>
+
 </body>
 </html>
