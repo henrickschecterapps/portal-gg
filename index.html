@@ -660,7 +660,11 @@
 
         try {
             if (db) {
-                await addDoc(collection(db, 'tickets'), data);
+                const ticketRef = await addDoc(collection(db, 'tickets'), data);
+                // Lookup público para acompanhamento sem login
+                await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js').then(m =>
+                    m.setDoc(m.doc(db, 'ticketLookup', data.ticketId), { docId: ticketRef.id })
+                );
             } else {
                 await new Promise(r => setTimeout(r, 1000));
             }
@@ -705,7 +709,7 @@
 
 <script type="module">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
-import { getFirestore, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+import { getFirestore, collection, doc, getDoc, getDocs } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 
 const firebaseConfig = {
     apiKey:            "AIzaSyDS7ObifHn2minG2TMcdUGlRyD8SP8vcAs",
@@ -739,17 +743,24 @@ window.trackTicket = async function() {
     box.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">Buscando...</p>';
 
     try {
-        const q = query(collection(db, 'tickets'), where('ticketId', '==', id));
-        const snap = await getDocs(q);
-        if (snap.empty) {
+        // Busca pelo lookup público (sem autenticação)
+        // busca pelo lookup público (sem autenticação)
+        const { getDoc: _getDoc, doc: _doc } = await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js');
+        const lookupRef = await _getDoc(_doc(db, 'ticketLookup', id));
+        if (!lookupRef.exists()) {
             box.innerHTML = `<div class="text-center py-4">
                 <p class="text-sm font-semibold text-slate-700">Ticket #${id} não encontrado</p>
                 <p class="text-xs text-slate-400 mt-1">Verifique o número e tente novamente</p>
             </div>`;
             return;
         }
-
-        const t = snap.docs[0].data();
+        const docId = lookupRef.data().docId;
+        const ticketSnap = await _getDoc(_doc(db, 'tickets', docId));
+        if (!ticketSnap.exists()) {
+            box.innerHTML = `<div class="text-center py-4"><p class="text-sm text-slate-500">Ticket não disponível.</p></div>`;
+            return;
+        }
+        const t = ticketSnap.data();
         const s = statusInfo[t.status] || { label: t.status, color:'#64748b', bg:'#f8fafc', icon:'📋' };
         const comments = (t.comentarios||[]).slice(-3).reverse();
         const checkDone = (t.checklist||[]).filter(i=>i.done).length;
