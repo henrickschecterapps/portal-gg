@@ -6,6 +6,7 @@
     <title>Painel G&G | Tripla</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
@@ -199,30 +200,65 @@
         <div class="stat-card"><div class="flex items-center justify-between mb-2"><span class="text-xs font-medium text-slate-500">Total Equipe G&G</span><div class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center"><i data-lucide="users" class="w-4 h-4 text-purple-600"></i></div></div><p class="text-3xl font-extrabold text-slate-800" id="kpi-team">—</p></div>
     </div>
 
-    <div class="stat-card">
-        <h3 class="font-bold text-slate-700 text-sm mb-3">Atividade Recente</h3>
-        <div id="recentActivity" class="space-y-2 text-sm text-slate-500">
-            <div class="skeleton h-8 w-full"></div>
-            <div class="skeleton h-8 w-3/4"></div>
-        </div>
-    </div>
-
+    <!-- Row 2: Donut + Barras por categoria -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div class="stat-card">
-            <h3 class="font-bold text-slate-700 text-sm mb-3">Tickets por Categoria</h3>
-            <div id="catBreakdown" class="space-y-2">
-                <div class="skeleton h-6 w-full"></div>
-                <div class="skeleton h-6 w-5/6"></div>
-                <div class="skeleton h-6 w-4/6"></div>
+            <h3 class="font-bold text-slate-700 text-sm mb-3">Distribuição de Status</h3>
+            <div class="flex items-center gap-6">
+                <div style="position:relative;width:140px;height:140px;flex-shrink:0">
+                    <canvas id="chartDonut"></canvas>
+                    <div id="donutCenter" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
+                        <span id="donutTotal" class="text-2xl font-extrabold text-slate-800">—</span>
+                        <span class="text-[10px] text-slate-400 font-medium">tickets</span>
+                    </div>
+                </div>
+                <div id="donutLegend" class="flex-1 space-y-2"></div>
             </div>
         </div>
         <div class="stat-card">
-            <h3 class="font-bold text-slate-700 text-sm mb-3">SLA por Categoria</h3>
-            <table id="slaDash">
-                <thead><tr><th>Categoria</th><th>Meta</th><th>Status</th></tr></thead>
-                <tbody id="slaDashBody"></tbody>
-            </table>
+            <h3 class="font-bold text-slate-700 text-sm mb-3">Volume por Categoria</h3>
+            <div style="position:relative;height:140px">
+                <canvas id="chartBars"></canvas>
+            </div>
         </div>
+    </div>
+
+    <!-- Row 3: Tendência semanal -->
+    <div class="stat-card">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-slate-700 text-sm">Tendência Semanal — Abertos vs. Concluídos</h3>
+            <span class="text-xs text-slate-400">últimas 6 semanas</span>
+        </div>
+        <div style="position:relative;height:160px">
+            <canvas id="chartLine"></canvas>
+        </div>
+    </div>
+
+    <!-- Row 4: Ranking + Atividade recente -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="stat-card">
+            <h3 class="font-bold text-slate-700 text-sm mb-3">Ranking de Responsáveis</h3>
+            <div id="rankingTable" class="space-y-2">
+                <div class="skeleton h-8 w-full"></div>
+                <div class="skeleton h-8 w-full"></div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <h3 class="font-bold text-slate-700 text-sm mb-3">Atividade Recente</h3>
+            <div id="recentActivity" class="space-y-2 text-sm text-slate-500">
+                <div class="skeleton h-8 w-full"></div>
+                <div class="skeleton h-8 w-3/4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 5: SLA table (mantida) -->
+    <div class="stat-card">
+        <h3 class="font-bold text-slate-700 text-sm mb-3">SLA por Categoria</h3>
+        <table id="slaDash">
+            <thead><tr><th>Categoria</th><th>Meta</th><th>Status</th></tr></thead>
+            <tbody id="slaDashBody"></tbody>
+        </table>
     </div>
 </div>
 
@@ -303,6 +339,17 @@
         <div class="stat-card"><h3 class="font-bold text-slate-700 text-sm mb-1">Em aberto agora</h3><p class="text-4xl font-extrabold text-amber-600" id="rep-open">—</p></div>
     </div>
 
+    <!-- Ranking detalhado -->
+    <div class="stat-card">
+        <h3 class="font-bold text-slate-700 text-sm mb-3">Desempenho por Responsável</h3>
+        <div class="overflow-x-auto">
+            <table>
+                <thead><tr><th>Responsável</th><th>Em aberto</th><th>Concluídos</th><th>Total</th><th>Taxa de conclusão</th></tr></thead>
+                <tbody id="repRankingTable"></tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="stat-card">
         <h3 class="font-bold text-slate-700 text-sm mb-3">SLA por Categoria (configurado em Preferências)</h3>
         <table>
@@ -315,7 +362,7 @@
         <h3 class="font-bold text-slate-700 text-sm mb-3">Todos os Tickets</h3>
         <div class="overflow-x-auto">
             <table>
-                <thead><tr><th>ID</th><th>Título</th><th>Categoria</th><th>Solicitante</th><th>Responsável</th><th>Criado</th><th>Status</th></tr></thead>
+                <thead><tr><th>ID</th><th>Título</th><th>Categoria</th><th>Solicitante</th><th>Responsável</th><th>Criado</th><th>Status</th><th>SLA</th></tr></thead>
                 <tbody id="allTicketsTable"></tbody>
             </table>
         </div>
@@ -864,7 +911,7 @@ function buildCardHTML(ticket) {
                 <div class="w-5 h-5 rounded-full bg-brand-100 flex items-center justify-center text-[9px] font-bold text-brand-700">${initials}</div>
                 ${responsavel}
             </div>
-            <span class="text-[10px] font-semibold ${sla.cls}">${sla.label}</span>
+            <span class="inline-flex items-center gap-1 text-[10px] font-semibold ${sla.cls}"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block;flex-shrink:0"></span>${sla.label}</span>
         </div>
     </div>`;
 }
@@ -1128,6 +1175,23 @@ window.createManualTicket = async function() {
     } catch(e) { showToast('Erro: ' + e.message); }
 };
 
+// ─── CHARTS STATE ────────────────────────────────────────────────────────────
+let chartDonut = null;
+let chartBars  = null;
+let chartLine  = null;
+
+const CHART_COLORS = {
+    rs:        { bg: 'rgba(99,102,241,0.85)',  border: '#6366f1' },
+    td:        { bg: 'rgba(217,70,239,0.85)',  border: '#d946ef' },
+    dp:        { bg: 'rgba(245,158,11,0.85)',  border: '#f59e0b' },
+    clima:     { bg: 'rgba(239,68,68,0.85)',   border: '#ef4444' },
+    novas:     { bg: 'rgba(59,130,246,0.85)',  border: '#3b82f6' },
+    andamento: { bg: 'rgba(245,158,11,0.85)',  border: '#f59e0b' },
+    aguardando:{ bg: 'rgba(168,85,247,0.85)',  border: '#a855f7' },
+    concluido: { bg: 'rgba(16,185,129,0.85)',  border: '#10b981' },
+    rejeitado: { bg: 'rgba(148,163,184,0.85)', border: '#94a3b8' },
+};
+
 // ─── DASHBOARD ───────────────────────────────────────────────────────────────
 function updateDashboard() {
     const list = Object.values(allTickets);
@@ -1149,19 +1213,163 @@ function updateDashboard() {
     document.getElementById('kpi-sla-risk').textContent = risk ? `${risk} com SLA crítico` : 'Todos dentro do prazo';
     document.getElementById('kpi-sla-risk').className = risk ? 'text-xs text-red-600 mt-1' : 'text-xs text-emerald-600 mt-1';
 
-    // Category breakdown
-    const cats = { rs: 0, td: 0, dp: 0, clima: 0 };
-    list.forEach(t => { if (cats[t.categoria] !== undefined) cats[t.categoria]++; });
-    const total = list.length || 1;
-    document.getElementById('catBreakdown').innerHTML = Object.entries(cats).map(([k, v]) => {
-        const style = catStyle(k);
-        return `<div>
-            <div class="flex justify-between text-xs mb-1"><span class="text-slate-600">${style.label}</span><span class="font-semibold">${v}</span></div>
-            <div class="progress-bar"><div class="progress-fill bg-brand-500" style="width:${Math.round(v/total*100)}%"></div></div>
+    renderDonutChart(list);
+    renderBarsChart(list);
+    renderLineChart(list);
+    renderRanking(list);
+    renderRecentActivity(list);
+}
+
+// ── Donut de status ──────────────────────────────────────────────────────────
+function renderDonutChart(list) {
+    const counts = {
+        novas:      list.filter(t => t.status === 'novas').length,
+        andamento:  list.filter(t => t.status === 'andamento').length,
+        aguardando: list.filter(t => t.status === 'aguardando').length,
+        concluido:  list.filter(t => t.status === 'concluido').length,
+        rejeitado:  list.filter(t => t.status === 'rejeitado').length,
+    };
+    const labels = ['Triagem', 'Em Execução', 'Aguardando', 'Concluído', 'Rejeitado'];
+    const keys   = ['novas', 'andamento', 'aguardando', 'concluido', 'rejeitado'];
+    const total  = list.length;
+
+    document.getElementById('donutTotal').textContent = total || '—';
+
+    const data = keys.map(k => counts[k]);
+    const bgColors = keys.map(k => CHART_COLORS[k].bg);
+    const bdColors = keys.map(k => CHART_COLORS[k].border);
+
+    if (chartDonut) { chartDonut.destroy(); chartDonut = null; }
+    const ctx = document.getElementById('chartDonut').getContext('2d');
+    chartDonut = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data, backgroundColor: bgColors, borderColor: bdColors, borderWidth: 1.5, hoverOffset: 4 }] },
+        options: {
+            cutout: '68%',
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false }, tooltip: { callbacks: {
+                label: ctx => ` ${ctx.label}: ${ctx.raw} (${total ? Math.round(ctx.raw/total*100) : 0}%)`
+            }}},
+        },
+    });
+
+    // Legend manual
+    document.getElementById('donutLegend').innerHTML = keys.map((k, i) =>
+        counts[k] > 0 ? `<div class="flex items-center gap-2 text-xs text-slate-600">
+            <span style="width:10px;height:10px;border-radius:2px;background:${bdColors[i]};flex-shrink:0;display:inline-block"></span>
+            <span class="flex-1">${labels[i]}</span>
+            <span class="font-semibold text-slate-800">${counts[k]}</span>
+        </div>` : ''
+    ).join('');
+}
+
+// ── Barras por categoria ─────────────────────────────────────────────────────
+function renderBarsChart(list) {
+    const catLabels = ['Recrutamento', 'Treinamento', 'Depto. Pessoal', 'Comunicados'];
+    const catKeys   = ['rs', 'td', 'dp', 'clima'];
+    const data      = catKeys.map(k => list.filter(t => t.categoria === k).length);
+    const bgColors  = catKeys.map(k => CHART_COLORS[k].bg);
+    const bdColors  = catKeys.map(k => CHART_COLORS[k].border);
+
+    if (chartBars) { chartBars.destroy(); chartBars = null; }
+    const ctx = document.getElementById('chartBars').getContext('2d');
+    chartBars = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: catLabels, datasets: [{ data, backgroundColor: bgColors, borderColor: bdColors, borderWidth: 1.5, borderRadius: 6 }] },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.raw} tickets` }}},
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#94a3b8' } },
+                y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 11 }, color: '#94a3b8', stepSize: 1 }, beginAtZero: true },
+            },
+        },
+    });
+}
+
+// ── Tendência semanal ────────────────────────────────────────────────────────
+function renderLineChart(list) {
+    const now = new Date();
+    const weeks = [];
+    for (let i = 5; i >= 0; i--) {
+        const start = new Date(now);
+        start.setDate(now.getDate() - (i + 1) * 7);
+        const end = new Date(now);
+        end.setDate(now.getDate() - i * 7);
+        const label = `${start.getDate()}/${start.getMonth()+1}`;
+        const abertos   = list.filter(t => {
+            if (!t.dataCriacao) return false;
+            const d = t.dataCriacao.toDate ? t.dataCriacao.toDate() : new Date(t.dataCriacao);
+            return d >= start && d < end;
+        }).length;
+        const concluidos = list.filter(t => {
+            if (t.status !== 'concluido' || !t.dataCriacao) return false;
+            const d = t.dataCriacao.toDate ? t.dataCriacao.toDate() : new Date(t.dataCriacao);
+            return d >= start && d < end;
+        }).length;
+        weeks.push({ label, abertos, concluidos });
+    }
+
+    if (chartLine) { chartLine.destroy(); chartLine = null; }
+    const ctx = document.getElementById('chartLine').getContext('2d');
+    chartLine = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: weeks.map(w => w.label),
+            datasets: [
+                { label: 'Abertos',    data: weeks.map(w => w.abertos),    borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)', tension: 0.3, fill: true,  pointRadius: 4, pointBackgroundColor: '#3b82f6', borderWidth: 2 },
+                { label: 'Concluídos', data: weeks.map(w => w.concluidos), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.08)', tension: 0.3, fill: true,  pointRadius: 4, pointBackgroundColor: '#10b981', borderWidth: 2 },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top', labels: { font: { size: 11 }, color: '#64748b', usePointStyle: true, pointStyleWidth: 8, boxHeight: 8 }}},
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#94a3b8' }},
+                y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 11 }, color: '#94a3b8', stepSize: 1 }, beginAtZero: true },
+            },
+        },
+    });
+}
+
+// ── Ranking de responsáveis ──────────────────────────────────────────────────
+function renderRanking(list) {
+    const map = {};
+    list.forEach(t => {
+        const name = t.responsavel || '(sem responsável)';
+        if (!map[name]) map[name] = { open: 0, done: 0 };
+        if (t.status === 'concluido') map[name].done++;
+        else if (t.status !== 'rejeitado') map[name].open++;
+    });
+
+    const rows = Object.entries(map)
+        .map(([name, d]) => ({ name, ...d, total: d.open + d.done }))
+        .sort((a, b) => b.done - a.done || a.open - b.open);
+
+    if (!rows.length) {
+        document.getElementById('rankingTable').innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum ticket atribuído ainda.</p>';
+        return;
+    }
+
+    document.getElementById('rankingTable').innerHTML = rows.map((r, i) => {
+        const pct = r.total ? Math.round(r.done / r.total * 100) : 0;
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
+        return `<div class="flex items-center gap-3 py-1.5 border-b border-slate-100 last:border-0">
+            <span class="text-sm w-6 flex-shrink-0">${medal}</span>
+            <span class="flex-1 text-sm font-medium text-slate-700 truncate">${r.name}</span>
+            <span class="text-xs text-emerald-600 font-semibold w-14 text-right">${r.done} concl.</span>
+            <span class="text-xs text-amber-600 font-semibold w-14 text-right">${r.open} aberto${r.open !== 1 ? 's' : ''}</span>
+            <span class="text-xs text-slate-400 w-10 text-right">${pct}%</span>
         </div>`;
     }).join('');
+}
 
-    // Recent activity
+// ── Atividade recente ────────────────────────────────────────────────────────
+function renderRecentActivity(list) {
     const recent = list.slice(0, 5);
     document.getElementById('recentActivity').innerHTML = recent.length
         ? recent.map(t => {
@@ -1211,7 +1419,7 @@ function updateNotifications() {
 function renderReports() {
     const list = Object.values(allTickets);
     const done = list.filter(t => t.status === 'concluido').length;
-    const open = list.filter(t => t.status !== 'concluido').length;
+    const open = list.filter(t => t.status !== 'concluido' && t.status !== 'rejeitado').length;
 
     document.getElementById('rep-done').textContent = done;
     document.getElementById('rep-open').textContent = open;
@@ -1219,9 +1427,37 @@ function renderReports() {
         ? Math.round(done / list.length * 100) + '%'
         : '—%';
 
+    // Ranking de responsáveis detalhado
+    const map = {};
+    list.forEach(t => {
+        const name = t.responsavel || '(sem responsável)';
+        if (!map[name]) map[name] = { open: 0, done: 0 };
+        if (t.status === 'concluido') map[name].done++;
+        else if (t.status !== 'rejeitado') map[name].open++;
+    });
+    const rankRows = Object.entries(map)
+        .map(([name, d]) => ({ name, ...d, total: d.open + d.done }))
+        .sort((a, b) => b.done - a.done);
+
+    document.getElementById('repRankingTable').innerHTML = rankRows.length
+        ? rankRows.map(r => {
+            const pct = r.total ? Math.round(r.done / r.total * 100) : 0;
+            const bar = `<div class="progress-bar" style="width:80px"><div class="progress-fill" style="width:${pct}%;background:${pct>=70?'#10b981':pct>=40?'#f59e0b':'#ef4444'}"></div></div>`;
+            return `<tr>
+                <td class="font-medium text-slate-800">${r.name}</td>
+                <td><span class="badge bg-amber-50 text-amber-700">${r.open}</span></td>
+                <td><span class="badge bg-emerald-50 text-emerald-700">${r.done}</span></td>
+                <td class="font-semibold">${r.total}</td>
+                <td><div class="flex items-center gap-2">${bar}<span class="text-xs font-semibold text-slate-600">${pct}%</span></div></td>
+            </tr>`;
+        }).join('')
+        : '<tr><td colspan="5" class="text-center text-slate-400 py-4">Nenhum ticket com responsável ainda.</td></tr>';
+
+    // Tabela completa com coluna SLA
     document.getElementById('allTicketsTable').innerHTML = list.map(t => {
         const style = catStyle(t.categoria);
         const date  = t.dataCriacao?.toDate ? t.dataCriacao.toDate().toLocaleDateString('pt-BR') : '—';
+        const sla   = getSLALabel(t);
         const statusMap = { novas:'Triagem', andamento:'Em Execução', aguardando:'Aguardando', concluido:'Concluído', rejeitado:'Rejeitado' };
         return `<tr>
             <td class="font-mono text-slate-400 text-xs">#${t.ticketId || t._docId?.slice(-4)}</td>
@@ -1231,8 +1467,9 @@ function renderReports() {
             <td>${t.responsavel || '<span class="text-slate-400">—</span>'}</td>
             <td>${date}</td>
             <td><span class="badge bg-slate-100 text-slate-600">${statusMap[t.status] || t.status}</span></td>
+            <td><span class="text-xs font-semibold ${sla.cls}">${sla.label}</span></td>
         </tr>`;
-    }).join('') || '<tr><td colspan="7" class="text-center text-slate-400 py-6">Nenhum ticket ainda.</td></tr>';
+    }).join('') || '<tr><td colspan="8" class="text-center text-slate-400 py-6">Nenhum ticket ainda.</td></tr>';
 }
 
 // ─── ADMIN: USERS ─────────────────────────────────────────────────────────────
